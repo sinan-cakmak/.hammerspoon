@@ -9,7 +9,8 @@ local minSize = 100
 local directions = {up=false, down=false, left=false, right=false}
 local actions = {
     grow=false, shrink=false,
-    growTop=false, growBottom=false, growLeft=false, growRight=false
+    growTop=false, growBottom=false, growLeft=false, growRight=false,
+    shrinkTop=false, shrinkBottom=false, shrinkLeft=false, shrinkRight=false
 }
 local timer = nil
 local engine = nil
@@ -44,7 +45,7 @@ local function updateWindow()
         f.h = math.max(minSize, f.h - baseStep)
     end
 
-    -- Directional resizing
+    -- Directional expanding
     if actions.growTop then
         f.y = f.y - baseStep
         f.h = f.h + baseStep
@@ -58,6 +59,22 @@ local function updateWindow()
     end
     if actions.growRight then
         f.w = f.w + baseStep
+    end
+
+    -- Directional shrinking
+    if actions.shrinkTop then
+        f.y = f.y + baseStep
+        f.h = math.max(minSize, f.h - baseStep)
+    end
+    if actions.shrinkBottom then
+        f.h = math.max(minSize, f.h - baseStep)
+    end
+    if actions.shrinkLeft then
+        f.x = f.x + baseStep
+        f.w = math.max(minSize, f.w - baseStep)
+    end
+    if actions.shrinkRight then
+        f.w = math.max(minSize, f.w - baseStep)
     end
 
     win:setFrame(f)
@@ -108,7 +125,8 @@ local function stopAction(key)
 
     if not (directions.up or directions.down or directions.left or directions.right
         or actions.grow or actions.shrink
-        or actions.growTop or actions.growBottom or actions.growLeft or actions.growRight) then
+        or actions.growTop or actions.growBottom or actions.growLeft or actions.growRight
+        or actions.shrinkTop or actions.shrinkBottom or actions.shrinkLeft or actions.shrinkRight) then
         if timer then timer:stop(); timer = nil end
         stopEngine()
     elseif not (directions.up or directions.down or directions.left or directions.right) then
@@ -117,7 +135,8 @@ local function stopAction(key)
 end
 
 -- Key bindings
-local mods = {"cmd", "alt"}
+local mods      = {"cmd", "alt"}
+local modsCtrl  = {"ctrl", "cmd", "alt"}
 
 -- Movement
 hs.hotkey.bind(mods, "Up",    function() startAction("up") end,    function() stopAction("up") end)
@@ -129,8 +148,14 @@ hs.hotkey.bind(mods, "Right", function() startAction("right") end, function() st
 hs.hotkey.bind(mods, "-", function() startAction("shrink") end, function() stopAction("shrink") end)
 hs.hotkey.bind(mods, "*", function() startAction("grow")   end, function() stopAction("grow") end)
 
--- Directional resizing
+-- Directional expanding
 hs.hotkey.bind(mods, "ı", function() startAction("growTop") end,    function() stopAction("growTop") end)
 hs.hotkey.bind(mods, "k", function() startAction("growBottom") end, function() stopAction("growBottom") end)
 hs.hotkey.bind(mods, "j", function() startAction("growLeft") end,   function() stopAction("growLeft") end)
 hs.hotkey.bind(mods, "l", function() startAction("growRight") end,  function() stopAction("growRight") end)
+
+-- Directional shrinking
+hs.hotkey.bind(modsCtrl, "ı", function() startAction("shrinkTop") end,    function() stopAction("shrinkTop") end)
+hs.hotkey.bind(modsCtrl, "k", function() startAction("shrinkBottom") end, function() stopAction("shrinkBottom") end)
+hs.hotkey.bind(modsCtrl, "j", function() startAction("shrinkLeft") end,   function() stopAction("shrinkLeft") end)
+hs.hotkey.bind(modsCtrl, "l", function() startAction("shrinkRight") end,  function() stopAction("shrinkRight") end)
