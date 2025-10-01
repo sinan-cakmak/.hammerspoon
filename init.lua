@@ -135,7 +135,7 @@ local function stopAction(key)
 end
 
 -- Key bindings
-local mods      = {"cmd", "alt"}
+local mods      = {"alt", "cmd", "shift"}
 local modsCtrl  = {"ctrl", "cmd", "alt"}
 
 -- Movement
