@@ -135,8 +135,8 @@ local function stopAction(key)
 end
 
 -- Key bindings
-local mods      = {"alt", "cmd", "shift"}
-local modsCtrl  = {"ctrl", "cmd", "alt"}
+local mods      = {"cmd", "shift"}
+local modsCtrl  = {"cmd", "shift", "alt"}
 
 -- Movement
 hs.hotkey.bind(mods, "Up",    function() startAction("up") end,    function() stopAction("up") end)
@@ -159,3 +159,21 @@ hs.hotkey.bind(modsCtrl, "ı", function() startAction("shrinkTop") end,    funct
 hs.hotkey.bind(modsCtrl, "k", function() startAction("shrinkBottom") end, function() stopAction("shrinkBottom") end)
 hs.hotkey.bind(modsCtrl, "j", function() startAction("shrinkLeft") end,   function() stopAction("shrinkLeft") end)
 hs.hotkey.bind(modsCtrl, "l", function() startAction("shrinkRight") end,  function() stopAction("shrinkRight") end)
+
+
+-----------------------------------------------------------------
+-- Unminimize frontmost app's first minimized window and focus it
+local function unminimizeFrontmostApp()
+    local app = hs.application.frontmostApplication()
+    if app then
+        for _, win in ipairs(app:allWindows()) do
+            if win:isMinimized() then
+                win:unminimize()
+                win:focus()
+                break
+            end
+        end
+    end
+end
+
+hs.hotkey.bind({"cmd", "shift"}, "m", unminimizeFrontmostApp)
