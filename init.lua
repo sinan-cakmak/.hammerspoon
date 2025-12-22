@@ -17,7 +17,7 @@ local engine = nil
 local step = baseStep
 
 -- Load engine loop from Sounds folder
-local soundPath = hs.configdir .. "/Sounds/engine_loop.aiff"
+-- local soundPath = hs.configdir .. "/Sounds/engine_loop.aiff"
 
 -- Update window movement and resizing
 local function updateWindow()
@@ -81,25 +81,25 @@ local function updateWindow()
 end
 
 -- Start engine sound (only for movement)
-local function startEngine()
-    if not engine then
-        engine = hs.sound.getByFile(soundPath)
-        if engine then
-            engine:play()
-            engine:setFinishedCallback(function()
-                if engine then engine:play() end
-            end)
-        end
-    end
-end
+-- local function startEngine()
+--     if not engine then
+--         engine = hs.sound.getByFile(soundPath)
+--         if engine then
+--             engine:play()
+--             engine:setFinishedCallback(function()
+--                 if engine then engine:play() end
+--             end)
+--         end
+--     end
+-- end
 
 -- Stop engine
-local function stopEngine()
-    if engine then
-        engine:stop()
-        engine = nil
-    end
-end
+-- local function stopEngine()
+--     if engine then
+--         engine:stop()
+--         engine = nil
+--     end
+-- end
 
 -- Start holding action
 local function startAction(key)
@@ -108,7 +108,7 @@ local function startAction(key)
         if not timer then
             step = baseStep
             timer = hs.timer.doEvery(interval, updateWindow)
-            startEngine()
+            -- startEngine()
         end
     elseif actions[key] ~= nil then
         actions[key] = true
@@ -128,15 +128,15 @@ local function stopAction(key)
         or actions.growTop or actions.growBottom or actions.growLeft or actions.growRight
         or actions.shrinkTop or actions.shrinkBottom or actions.shrinkLeft or actions.shrinkRight) then
         if timer then timer:stop(); timer = nil end
-        stopEngine()
+        -- stopEngine()
     elseif not (directions.up or directions.down or directions.left or directions.right) then
-        stopEngine()
+        -- stopEngine()
     end
 end
 
 -- Key bindings
-local mods      = {"cmd", "shift"}
-local modsCtrl  = {"cmd", "shift", "alt"}
+local mods      = {"ctrl", "shift"}
+local modsCtrl  = {"ctrl", "shift", "alt"}
 
 -- Movement
 hs.hotkey.bind(mods, "Up",    function() startAction("up") end,    function() stopAction("up") end)
