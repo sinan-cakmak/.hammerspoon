@@ -10,8 +10,9 @@
 -- along that side has its shared edge moved to follow. Recursion is avoided by
 -- recording the frames we set, so the neighbour's own event becomes a no-op.
 
-local cfg  = require("config")
-local util = require("lib.util")
+local cfg      = require("config")
+local util     = require("lib.util")
+local coupling = require("lib.coupling")
 
 local log = util.logger("tile")
 
@@ -44,6 +45,11 @@ function M.start()
 
     local function handleResize(win, old, new)
         local id = win:id()
+
+        -- Skip windows that were just moved programmatically (e.g. quick throw),
+        -- so those don't drag their neighbours along -- only manual edge drags do.
+        if coupling.isSuspended(id) then return end
+
         local oldL, oldR, oldT, oldB = old.x, old.x + old.w, old.y, old.y + old.h
         local newL, newR, newT, newB = new.x, new.x + new.w, new.y, new.y + new.h
 

@@ -2,8 +2,9 @@
 -- in a direction to fling the window under the cursor into a target zone.
 -- Release the modifiers to commit. Zones are defined in config.lua.
 
-local cfg  = require("config")
-local util = require("lib.util")
+local cfg      = require("config")
+local util     = require("lib.util")
+local coupling = require("lib.coupling")
 
 local log = util.logger("throw")
 
@@ -103,6 +104,7 @@ function M.start()
         active = false
         if timer then timer:stop(); timer = nil end
         if dir and window then
+            coupling.suspend(window:id())  -- don't drag neighbours on a throw
             local ok, err = pcall(function()
                 window:setFrame(zones[dir], animation)  -- short, fast glide
                 window:raise()   -- bring it above the other windows at that spot
