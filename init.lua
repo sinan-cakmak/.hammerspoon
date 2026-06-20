@@ -256,30 +256,46 @@ local throwDir     = nil
 
 -- Persistent overlay canvases, created once and reused (never deleted/recreated
 -- per throw, which is what caused Hammerspoon to lag/freeze after a few uses).
-local throwDotRadius = 9
-local throwDot = hs.canvas.new({x = 0, y = 0, w = throwDotRadius * 2, h = throwDotRadius * 2})
-throwDot[1] = {
-    type = "circle",
-    action = "fill",
-    center = {x = throwDotRadius, y = throwDotRadius},
-    radius = throwDotRadius,
-    fillColor = {red = 1, green = 0, blue = 0, alpha = 0.9},
-}
+--
+-- The cursor lock indicator is a small "reticle": a soft halo, a thin accent
+-- ring, four directional ticks (hinting the four throw axes), and a glowing core.
+local accent = {red = 0.04, green = 0.52, blue = 1.0}  -- azure
+local function rgba(c, a)
+    return {red = c.red, green = c.green, blue = c.blue, alpha = a}
+end
+
+local throwDotSize = 28
+local throwDotC = throwDotSize / 2   -- center
+local throwDot = hs.canvas.new({x = 0, y = 0, w = throwDotSize, h = throwDotSize})
+throwDot:appendElements(
+    -- soft white glow
+    {
+        type = "circle", action = "fill",
+        center = {x = throwDotC, y = throwDotC}, radius = 9,
+        fillColor = {red = 1, green = 1, blue = 1, alpha = 0.25},
+    },
+    -- white core
+    {
+        type = "circle", action = "fill",
+        center = {x = throwDotC, y = throwDotC}, radius = 4.5,
+        fillColor = {red = 1, green = 1, blue = 1, alpha = 0.98},
+    }
+)
 throwDot:level(hs.canvas.windowLevels.overlay)
 
 local throwPreview = hs.canvas.new({x = 0, y = 0, w = 100, h = 100})
 throwPreview[1] = {
     type = "rectangle",
     action = "strokeAndFill",
-    fillColor = {red = 0.2, green = 0.5, blue = 1, alpha = 0.2},
-    strokeColor = {red = 0.2, green = 0.5, blue = 1, alpha = 0.9},
+    fillColor = rgba(accent, 0.18),
+    strokeColor = rgba(accent, 0.9),
     strokeWidth = 4,
-    roundedRectRadii = {xRadius = 8, yRadius = 8},
+    roundedRectRadii = {xRadius = 12, yRadius = 12},
 }
 throwPreview:level(hs.canvas.windowLevels.overlay)
 
 local function showDot(pt)
-    throwDot:topLeft({x = pt.x - throwDotRadius, y = pt.y - throwDotRadius})
+    throwDot:topLeft({x = pt.x - throwDotC, y = pt.y - throwDotC})
     throwDot:show()
 end
 
