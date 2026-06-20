@@ -199,10 +199,12 @@ local function snapWindow(position)
         f.y = max.y + max.h / 2
         f.h = max.h / 2
     elseif position == "center" then
-        f.w = max.w / 2
-        f.h = max.h / 2
-        f.x = max.x + max.w / 4
-        f.y = max.y + max.h / 4
+        -- Keep the window's current size; just recenter it on the screen
+        local cur = win:frame()
+        f.w = cur.w
+        f.h = cur.h
+        f.x = max.x + (max.w - cur.w) / 2
+        f.y = max.y + (max.h - cur.h) / 2
     end
 
     win:setFrame(f)
