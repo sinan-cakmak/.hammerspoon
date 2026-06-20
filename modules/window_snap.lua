@@ -3,6 +3,7 @@
 --   Ctrl+Alt + C                  -> recenter (keeps current size)
 --   Ctrl+Alt + U                  -> cycle corner quarters (clockwise from nearest)
 --   Ctrl+Alt + D                  -> cycle vertical thirds (left -> center -> right, from nearest)
+--   Ctrl+Alt + Delete             -> revert the last snap (press again to toggle back)
 --
 -- Cycle behaviour: if the window isn't already sitting in one of the cycle's
 -- slots, it snaps to the nearest slot; if it already is, it advances to the next.
@@ -62,10 +63,31 @@ local function frameFor(position, win)
     return f
 end
 
+-- Remember each window's frame before we change it, so a snap can be reverted.
+local prevFrames = {}
+
+-- Set a window's frame, first stashing its current frame for revert/toggle.
+local function applyFrame(win, newFrame)
+    prevFrames[win:id()] = win:frame()
+    win:setFrame(newFrame)
+end
+
+-- Restore the focused window's pre-snap frame. Swaps current<->saved so
+-- repeated presses toggle between the two.
+local function revert()
+    local win = hs.window.focusedWindow()
+    if not win then return end
+    local id = win:id()
+    local saved = prevFrames[id]
+    if not saved then return end
+    prevFrames[id] = win:frame()
+    win:setFrame(saved)
+end
+
 local function snapWindow(position)
     local win = hs.window.focusedWindow()
     if not win then return end
-    win:setFrame(frameFor(position, win))
+    applyFrame(win, frameFor(position, win))
 end
 
 -- True if two frames match within a tolerance (window managers round sizes).
@@ -93,7 +115,7 @@ local function cycle(order)
     for i, pos in ipairs(order) do
         if framesMatch(cur, frameFor(pos, win)) then
             local nextPos = order[(i % #order) + 1]
-            win:setFrame(frameFor(nextPos, win))
+            applyFrame(win, frameFor(nextPos, win))
             return
         end
     end
@@ -108,7 +130,7 @@ local function cycle(order)
             bestDist, bestPos = d, pos
         end
     end
-    win:setFrame(frameFor(bestPos, win))
+    applyFrame(win, frameFor(bestPos, win))
 end
 
 function M.start()
@@ -128,6 +150,9 @@ function M.start()
     hs.hotkey.bind(mods, "d", function()
         cycle({"leftthird", "centerthird", "rightthird"})
     end)
+
+    -- Revert the last snap (toggles between current and previous frame).
+    hs.hotkey.bind(mods, "delete", revert)
 end
 
 return M
