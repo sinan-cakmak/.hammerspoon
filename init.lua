@@ -214,3 +214,208 @@ hs.hotkey.bind(snapMods, "Right", function() snapWindow("right") end)
 hs.hotkey.bind(snapMods, "Up",    function() snapWindow("up") end)
 hs.hotkey.bind(snapMods, "Down",  function() snapWindow("down") end)
 hs.hotkey.bind(snapMods, "c",     function() snapWindow("center") end)
+
+
+-----------------------------------------------------------------
+-- Quick throw: hold Cmd+Option to lock the cursor (red dot), move the
+-- mouse in a direction to fling the focused window into a target zone.
+-- Zones were captured from these windows' positions (absolute coords):
+--   left = Arc, right = Warp, up = Cursor, down = Conductor
+local throwZones = {
+    left  = {x = 0,    y = 30, w = 1069, h = 1410}, -- Arc
+    right = {x = 4102, y = 30, w = 1018, h = 1410}, -- Warp
+    up    = {x = 1070, y = 30, w = 1509, h = 1410}, -- Cursor
+    down  = {x = 2580, y = 30, w = 1521, h = 1410}, -- Conductor
+}
+
+local throwDeadzone = 40   -- px the cursor must travel before a direction locks in
+
+-- === DEBUG LOGGING ===========================================================
+-- Appends to /tmp/hs_throw.log so the whole lifecycle can be inspected after a
+-- repro. Includes a counter so we can see exactly which throw breaks things.
+local throwLogPath = "/tmp/hs_throw.log"
+local throwCount = 0
+local function tlog(fmt, ...)
+    local ok, line = pcall(string.format, fmt, ...)
+    if not ok then line = fmt end
+    local f = io.open(throwLogPath, "a")
+    if f then
+        f:write(os.date("%H:%M:%S ") .. line .. "\n")
+        f:close()
+    end
+    print("[throw] " .. line)
+end
+do local f = io.open(throwLogPath, "w"); if f then f:close() end end  -- fresh log per reload
+tlog("=== init.lua loaded, throw module initialised ===")
+-- =============================================================================
+
+local throwActive  = false
+local throwOrigin  = nil
+local throwWindow  = nil
+local throwDir     = nil
+
+-- Persistent overlay canvases, created once and reused (never deleted/recreated
+-- per throw, which is what caused Hammerspoon to lag/freeze after a few uses).
+local throwDotRadius = 9
+local throwDot = hs.canvas.new({x = 0, y = 0, w = throwDotRadius * 2, h = throwDotRadius * 2})
+throwDot[1] = {
+    type = "circle",
+    action = "fill",
+    center = {x = throwDotRadius, y = throwDotRadius},
+    radius = throwDotRadius,
+    fillColor = {red = 1, green = 0, blue = 0, alpha = 0.9},
+}
+throwDot:level(hs.canvas.windowLevels.overlay)
+
+local throwPreview = hs.canvas.new({x = 0, y = 0, w = 100, h = 100})
+throwPreview[1] = {
+    type = "rectangle",
+    action = "strokeAndFill",
+    fillColor = {red = 0.2, green = 0.5, blue = 1, alpha = 0.2},
+    strokeColor = {red = 0.2, green = 0.5, blue = 1, alpha = 0.9},
+    strokeWidth = 4,
+    roundedRectRadii = {xRadius = 8, yRadius = 8},
+}
+throwPreview:level(hs.canvas.windowLevels.overlay)
+
+local function showDot(pt)
+    throwDot:topLeft({x = pt.x - throwDotRadius, y = pt.y - throwDotRadius})
+    throwDot:show()
+end
+
+local function showPreview(zone)
+    if not zone then
+        throwPreview:hide()
+        return
+    end
+    throwPreview:frame(zone)
+    throwPreview:show()
+end
+
+local function pickThrowDirection(pt)
+    local dx = pt.x - throwOrigin.x
+    local dy = pt.y - throwOrigin.y
+    if math.abs(dx) < throwDeadzone and math.abs(dy) < throwDeadzone then
+        return nil
+    end
+    if math.abs(dx) >= math.abs(dy) then
+        return dx < 0 and "left" or "right"
+    else
+        return dy < 0 and "up" or "down"
+    end
+end
+
+-- While a throw is active this timer both updates the preview and watches the
+-- modifier keys, so release is detected reliably (rather than depending on
+-- catching the exact flagsChanged event, which could be missed -> stuck throw).
+local throwTimer = nil
+local throwFlagsTap = nil   -- forward declaration (assigned after startThrow)
+
+-- Topmost visible standard window whose frame contains the given point
+local function windowUnderPoint(pt)
+    for _, win in ipairs(hs.window.orderedWindows()) do
+        if win:isStandard() and win:isVisible() then
+            local f = win:frame()
+            if pt.x >= f.x and pt.x <= f.x + f.w
+                and pt.y >= f.y and pt.y <= f.y + f.h then
+                return win
+            end
+        end
+    end
+    return nil
+end
+
+local function endThrow()
+    if not throwActive then return end
+    throwActive = false
+    if throwTimer then throwTimer:stop(); throwTimer = nil end
+    if throwDir and throwWindow then
+        local ok, err = pcall(function()
+            throwWindow:setFrame(throwZones[throwDir])
+            throwWindow:raise()   -- bring it above the other windows at that spot
+            throwWindow:focus()   -- and make it the active window
+        end)
+        tlog("endThrow #%d: committed dir=%s setFrame_ok=%s err=%s",
+            throwCount, tostring(throwDir), tostring(ok), tostring(err))
+    else
+        tlog("endThrow #%d: no commit (dir=%s win=%s)",
+            throwCount, tostring(throwDir), tostring(throwWindow))
+    end
+    throwDot:hide()
+    throwPreview:hide()
+    throwOrigin, throwWindow, throwDir = nil, nil, nil
+end
+
+local function throwTick()
+    if not throwActive then return end
+    -- Commit the moment Cmd or Option is released (reliable, polled each tick)
+    local mods = hs.eventtap.checkKeyboardModifiers()
+    if not (mods.cmd and mods.alt) then
+        endThrow()
+        return
+    end
+    local dir = pickThrowDirection(hs.mouse.absolutePosition())
+    if dir ~= throwDir then
+        throwDir = dir
+        showPreview(dir and throwZones[dir] or nil)
+    end
+end
+
+local function startThrow()
+    if throwActive then
+        tlog("startThrow IGNORED: already active (count=%d) -- possible stuck state", throwCount)
+        return
+    end
+    throwCount = throwCount + 1
+    throwOrigin = hs.mouse.absolutePosition()
+    throwWindow = windowUnderPoint(throwOrigin)
+    if not throwWindow then
+        tlog("startThrow #%d: no window under cursor at (%.0f,%.0f)",
+            throwCount, throwOrigin.x, throwOrigin.y)
+        return
+    end
+    throwActive = true
+    throwDir = nil
+    showDot(throwOrigin)
+    showPreview(nil)
+    throwTimer = hs.timer.doEvery(0.02, function()
+        local ok, err = pcall(throwTick)
+        if not ok then tlog("throwTick ERROR #%d: %s", throwCount, tostring(err)) end
+    end)
+    tlog("startThrow #%d: win=[%s] flagsTapEnabled=%s",
+        throwCount, tostring(throwWindow:title()), tostring(throwFlagsTap and throwFlagsTap:isEnabled()))
+end
+
+-- Activate as soon as Cmd+Option (and nothing else) is held; the timer commits
+-- on release, and this also catches release when the flagsChanged event arrives.
+throwFlagsTap = hs.eventtap.new({hs.eventtap.event.types.flagsChanged}, function(e)
+    local ok, err = pcall(function()
+        local f = e:getFlags()
+        if f.cmd and f.alt and not f.ctrl and not f.shift then
+            startThrow()
+        elseif throwActive and not (f.cmd and f.alt) then
+            endThrow()
+        end
+    end)
+    if not ok then tlog("flagsTap ERROR: %s", tostring(err)) end
+    return false
+end)
+throwFlagsTap:start()
+tlog("flagsTap started, enabled=%s", tostring(throwFlagsTap:isEnabled()))
+
+-- Watchdog: if macOS disables the eventtap (the classic cause of "it stops
+-- working after a few uses"), log it and re-enable so we can both detect AND
+-- recover. Also reports orphaned timers / stuck active state.
+local throwWatchdog = hs.timer.doEvery(1, function()
+    if throwFlagsTap and not throwFlagsTap:isEnabled() then
+        tlog("WATCHDOG: flagsTap was DISABLED (count=%d) -- re-enabling", throwCount)
+        throwFlagsTap:start()
+    end
+end)
+
+-- Manual state dump: Ctrl+Shift+Alt+D
+hs.hotkey.bind({"ctrl", "shift", "alt"}, "d", function()
+    tlog("STATE DUMP: count=%d active=%s timer=%s flagsTapEnabled=%s",
+        throwCount, tostring(throwActive), tostring(throwTimer ~= nil),
+        tostring(throwFlagsTap and throwFlagsTap:isEnabled()))
+end)
