@@ -1,17 +1,18 @@
--- Half-screen snapping, corner quarters, and centering.
+-- Window snapping: half-screen, centering, and cycling presets.
 --   Ctrl+Alt + Left/Right/Up/Down -> fill that half of the screen
---   Ctrl+Alt + U/I/K/L            -> top-left / top-right / bottom-left / bottom-right quarter
---   Ctrl+Alt + D/F/G              -> left / center / right third (full height)
---   Ctrl+Alt + E/T                -> left / right two-thirds (full height)
 --   Ctrl+Alt + C                  -> recenter (keeps current size)
+--   Ctrl+Alt + U                  -> cycle corner quarters (clockwise from nearest)
+--   Ctrl+Alt + D                  -> cycle vertical thirds (left -> center -> right, from nearest)
+--
+-- Cycle behaviour: if the window isn't already sitting in one of the cycle's
+-- slots, it snaps to the nearest slot; if it already is, it advances to the next.
 
 local cfg = require("config")
 
 local M = {}
 
-local function snapWindow(position)
-    local win = hs.window.focusedWindow()
-    if not win then return end
+-- Compute the target frame for a named position on the window's screen.
+local function frameFor(position, win)
     local max = win:screen():frame()
     local f = {x = max.x, y = max.y, w = max.w, h = max.h}
 
@@ -49,11 +50,6 @@ local function snapWindow(position)
     elseif position == "rightthird" then
         f.x = max.x + max.w * 2 / 3
         f.w = max.w / 3
-    elseif position == "lefttwothirds" then
-        f.w = max.w * 2 / 3
-    elseif position == "righttwothirds" then
-        f.x = max.x + max.w / 3
-        f.w = max.w * 2 / 3
     elseif position == "center" then
         -- Keep the window's current size; just recenter it on the screen
         local cur = win:frame()
@@ -63,7 +59,56 @@ local function snapWindow(position)
         f.y = max.y + (max.h - cur.h) / 2
     end
 
-    win:setFrame(f)
+    return f
+end
+
+local function snapWindow(position)
+    local win = hs.window.focusedWindow()
+    if not win then return end
+    win:setFrame(frameFor(position, win))
+end
+
+-- True if two frames match within a tolerance (window managers round sizes).
+local function framesMatch(a, b, tol)
+    tol = tol or 15
+    return math.abs(a.x - b.x) <= tol
+        and math.abs(a.y - b.y) <= tol
+        and math.abs(a.w - b.w) <= tol
+        and math.abs(a.h - b.h) <= tol
+end
+
+local function frameCenter(f)
+    return {x = f.x + f.w / 2, y = f.y + f.h / 2}
+end
+
+-- Cycle the focused window through an ordered list of named positions.
+-- If the window already occupies one of them, advance to the next (wrapping);
+-- otherwise jump to whichever slot's center is closest to the window's center.
+local function cycle(order)
+    local win = hs.window.focusedWindow()
+    if not win then return end
+    local cur = win:frame()
+
+    -- Already in a slot? -> advance to the next one.
+    for i, pos in ipairs(order) do
+        if framesMatch(cur, frameFor(pos, win)) then
+            local nextPos = order[(i % #order) + 1]
+            win:setFrame(frameFor(nextPos, win))
+            return
+        end
+    end
+
+    -- Otherwise snap to the nearest slot by center distance.
+    local c = frameCenter(cur)
+    local bestPos, bestDist
+    for _, pos in ipairs(order) do
+        local pc = frameCenter(frameFor(pos, win))
+        local d = (pc.x - c.x) ^ 2 + (pc.y - c.y) ^ 2
+        if not bestDist or d < bestDist then
+            bestDist, bestPos = d, pos
+        end
+    end
+    win:setFrame(frameFor(bestPos, win))
 end
 
 function M.start()
@@ -74,20 +119,15 @@ function M.start()
     hs.hotkey.bind(mods, "Down",  function() snapWindow("down") end)
     hs.hotkey.bind(mods, "c",     function() snapWindow("center") end)
 
-    -- Corner quarters (u/i/k/l form a square matching the screen layout)
-    hs.hotkey.bind(mods, "u",     function() snapWindow("topleft") end)
-    hs.hotkey.bind(mods, "i",     function() snapWindow("topright") end)
-    hs.hotkey.bind(mods, "k",     function() snapWindow("bottomleft") end)
-    hs.hotkey.bind(mods, "l",     function() snapWindow("bottomright") end)
+    -- Corner quarters, cycled clockwise starting from the nearest corner.
+    hs.hotkey.bind(mods, "u", function()
+        cycle({"topleft", "topright", "bottomright", "bottomleft"})
+    end)
 
-    -- Vertical thirds (d/f/g = left / center / right third, full height)
-    hs.hotkey.bind(mods, "d",     function() snapWindow("leftthird") end)
-    hs.hotkey.bind(mods, "f",     function() snapWindow("centerthird") end)
-    hs.hotkey.bind(mods, "g",     function() snapWindow("rightthird") end)
-
-    -- Vertical two-thirds (e/t = left / right two-thirds, full height)
-    hs.hotkey.bind(mods, "e",     function() snapWindow("lefttwothirds") end)
-    hs.hotkey.bind(mods, "t",     function() snapWindow("righttwothirds") end)
+    -- Vertical thirds, cycled left -> center -> right starting from the nearest.
+    hs.hotkey.bind(mods, "d", function()
+        cycle({"leftthird", "centerthird", "rightthird"})
+    end)
 end
 
 return M
