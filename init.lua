@@ -17,7 +17,7 @@ local engine = nil
 local step = baseStep
 
 -- Load engine loop from Sounds folder
--- local soundPath = hs.configdir .. "/Sounds/engine_loop.aiff"
+local soundPath = hs.configdir .. "/Sounds/engine_loop.aiff"
 
 -- Update window movement and resizing
 local function updateWindow()
@@ -81,25 +81,25 @@ local function updateWindow()
 end
 
 -- Start engine sound (only for movement)
--- local function startEngine()
---     if not engine then
---         engine = hs.sound.getByFile(soundPath)
---         if engine then
---             engine:play()
---             engine:setFinishedCallback(function()
---                 if engine then engine:play() end
---             end)
---         end
---     end
--- end
+local function startEngine()
+    if not engine then
+        engine = hs.sound.getByFile(soundPath)
+        if engine then
+            engine:play()
+            engine:setFinishedCallback(function()
+                if engine then engine:play() end
+            end)
+        end
+    end
+end
 
 -- Stop engine
--- local function stopEngine()
---     if engine then
---         engine:stop()
---         engine = nil
---     end
--- end
+local function stopEngine()
+    if engine then
+        engine:stop()
+        engine = nil
+    end
+end
 
 -- Start holding action
 local function startAction(key)
@@ -108,8 +108,8 @@ local function startAction(key)
         if not timer then
             step = baseStep
             timer = hs.timer.doEvery(interval, updateWindow)
-            -- startEngine()
         end
+        startEngine()
     elseif actions[key] ~= nil then
         actions[key] = true
         if not timer then
@@ -128,9 +128,9 @@ local function stopAction(key)
         or actions.growTop or actions.growBottom or actions.growLeft or actions.growRight
         or actions.shrinkTop or actions.shrinkBottom or actions.shrinkLeft or actions.shrinkRight) then
         if timer then timer:stop(); timer = nil end
-        -- stopEngine()
+        stopEngine()
     elseif not (directions.up or directions.down or directions.left or directions.right) then
-        -- stopEngine()
+        stopEngine()
     end
 end
 
@@ -177,3 +177,40 @@ local function unminimizeFrontmostApp()
 end
 
 hs.hotkey.bind({"cmd", "shift"}, "m", unminimizeFrontmostApp)
+
+
+-----------------------------------------------------------------
+-- Window snapping (Ctrl+Option)
+local function snapWindow(position)
+    local win = hs.window.focusedWindow()
+    if not win then return end
+    local screen = win:screen()
+    local max = screen:frame()
+    local f = {x = max.x, y = max.y, w = max.w, h = max.h}
+
+    if position == "left" then
+        f.w = max.w / 2
+    elseif position == "right" then
+        f.x = max.x + max.w / 2
+        f.w = max.w / 2
+    elseif position == "up" then
+        f.h = max.h / 2
+    elseif position == "down" then
+        f.y = max.y + max.h / 2
+        f.h = max.h / 2
+    elseif position == "center" then
+        f.w = max.w / 2
+        f.h = max.h / 2
+        f.x = max.x + max.w / 4
+        f.y = max.y + max.h / 4
+    end
+
+    win:setFrame(f)
+end
+
+local snapMods = {"ctrl", "alt"}
+hs.hotkey.bind(snapMods, "Left",  function() snapWindow("left") end)
+hs.hotkey.bind(snapMods, "Right", function() snapWindow("right") end)
+hs.hotkey.bind(snapMods, "Up",    function() snapWindow("up") end)
+hs.hotkey.bind(snapMods, "Down",  function() snapWindow("down") end)
+hs.hotkey.bind(snapMods, "c",     function() snapWindow("center") end)
