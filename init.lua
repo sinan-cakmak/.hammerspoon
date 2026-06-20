@@ -7,6 +7,7 @@ local modules = {
     "modules.window_move",   -- held-arrow move / resize engine
     "modules.window_snap",   -- half-screen snapping + center
     "modules.window_throw",  -- Cmd+Alt quick throw
+    "modules.window_tile_resize", -- paired-edge resizing of adjacent windows
     "modules.app_control",   -- unminimize, etc.
 }
 

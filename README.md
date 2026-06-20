@@ -22,6 +22,8 @@ tweak, and extend.
   the mouse toward a zone, release to drop the window there — with a live
   preview overlay.
 - **Recenter** a window without changing its size.
+- **Paired-edge resizing**: drag the shared edge between two adjacent windows and
+  the neighbour resizes too, keeping the seam glued (tiling-style).
 - **Unminimize** the frontmost app's minimized window.
 
 ---
@@ -125,6 +127,7 @@ Releasing without moving past the deadzone does nothing.
     ├── window_move.lua   # Held-arrow move / resize engine
     ├── window_snap.lua   # Halves, corner/third cycling, recenter, revert
     ├── window_throw.lua  # Cmd+Option quick throw
+    ├── window_tile_resize.lua # Paired-edge resizing of adjacent windows
     └── app_control.lua   # Unminimize, app utilities
 ```
 
@@ -140,7 +143,8 @@ All tunables live in [`config.lua`](config.lua):
 - **`mods`** — the modifier combos for each feature group.
 - **`accent`** — the overlay color (azure by default).
 - **`move`** — step sizes, acceleration, timer interval, minimum window size.
-- **`throw`** — the cursor deadzone and the target zones.
+- **`throw`** — the cursor deadzone, drop animation, and target zones.
+- **`tile`** — paired-edge resizing: toggle, edge tolerance, neighbour min size.
 - **`debug`** — set `true` to write logs to `/tmp/hs.log`.
 
 ### Customizing throw zones

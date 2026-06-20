@@ -26,6 +26,14 @@ return {
         minSize  = 100,
     },
 
+    -- Paired-edge resizing: when you drag one window's edge, a neighbouring
+    -- window sharing that edge resizes too, keeping the common seam glued.
+    tile = {
+        enabled = true,
+        edgeTolerance = 12,  -- px gap still treated as a shared edge
+        minSize = 80,        -- don't shrink a neighbour below this
+    },
+
     -- Quick throw: target zones captured from window positions (absolute coords).
     --   left = Arc, right = Warp, up = Cursor, down = Conductor
     throw = {
