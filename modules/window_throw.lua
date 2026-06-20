@@ -12,6 +12,7 @@ local M = {}
 function M.start()
     local zones    = cfg.throw.zones
     local deadzone = cfg.throw.deadzone
+    local animation = cfg.throw.animation or 0
 
     -- State
     local active = false
@@ -95,7 +96,7 @@ function M.start()
         if timer then timer:stop(); timer = nil end
         if dir and window then
             local ok, err = pcall(function()
-                window:setFrame(zones[dir])
+                window:setFrame(zones[dir], animation)  -- short, fast glide
                 window:raise()   -- bring it above the other windows at that spot
                 window:focus()   -- and make it the active window
             end)

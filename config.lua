@@ -30,6 +30,7 @@ return {
     --   left = Arc, right = Warp, up = Cursor, down = Conductor
     throw = {
         deadzone = 40,   -- px the cursor must travel before a direction locks in
+        animation = 0.08, -- seconds for the drop animation (0 = instant, no glide)
         zones = {
             left  = {x = 0,    y = 30, w = 1069, h = 1410}, -- Arc
             right = {x = 4102, y = 30, w = 1018, h = 1410}, -- Warp
