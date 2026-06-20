@@ -63,13 +63,21 @@ function M.start()
         preview:show()
     end
 
+    -- 8-way direction picker. A flick counts as diagonal when its smaller axis
+    -- is at least tan(22.5deg) of its larger one (i.e. within the 45deg wedge).
+    local DIAG_RATIO = 0.414
     local function pickDirection(pt)
         local dx = pt.x - origin.x
         local dy = pt.y - origin.y
-        if math.abs(dx) < deadzone and math.abs(dy) < deadzone then
+        local ax, ay = math.abs(dx), math.abs(dy)
+        if math.max(ax, ay) < deadzone then
             return nil
         end
-        if math.abs(dx) >= math.abs(dy) then
+        if math.min(ax, ay) / math.max(ax, ay) > DIAG_RATIO then
+            local v = dy < 0 and "top" or "bottom"
+            local h = dx < 0 and "left" or "right"
+            return v .. h   -- topleft / topright / bottomleft / bottomright
+        elseif ax >= ay then
             return dx < 0 and "left" or "right"
         else
             return dy < 0 and "up" or "down"

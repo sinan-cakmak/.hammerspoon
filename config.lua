@@ -40,10 +40,16 @@ return {
         deadzone = 40,   -- px the cursor must travel before a direction locks in
         animation = 0.08, -- seconds for the drop animation (0 = instant, no glide)
         zones = {
-            left  = {x = 0,    y = 30, w = 1069, h = 1410}, -- Arc
+            -- Cardinal directions
+            left  = {x = 0,    y = 30, w = 1069, h = 1410}, -- Arc (full height)
             right = {x = 4102, y = 30, w = 1018, h = 1410}, -- Warp
             up    = {x = 1070, y = 30, w = 1509, h = 1410}, -- Cursor
             down  = {x = 2580, y = 30, w = 1521, h = 1410}, -- Conductor
+            -- Diagonal directions (corners)
+            topleft     = {x = 0,    y = 30,  w = 1069, h = 710}, -- Arc
+            bottomleft  = {x = 0,    y = 740, w = 1069, h = 700}, -- Slack
+            topright    = {x = 4102, y = 30,  w = 1018, h = 701}, -- WhatsApp
+            bottomright = {x = 4102, y = 731, w = 1018, h = 709}, -- Ghostty
         },
     },
 }
