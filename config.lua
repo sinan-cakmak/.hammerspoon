@@ -38,7 +38,7 @@ return {
     --   left = Arc, right = Warp, up = Cursor, down = Conductor
     throw = {
         deadzone = 40,   -- px the cursor must travel before a direction locks in
-        animation = 0.08, -- seconds for the drop animation (0 = instant, no glide)
+        animation = 0,    -- seconds for the drop animation (0 = instant, no glide)
         zones = {
             -- Cardinal directions
             left  = {x = 0,    y = 30, w = 1069, h = 1410}, -- Arc (full height)
