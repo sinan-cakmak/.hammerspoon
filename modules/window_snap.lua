@@ -1,5 +1,6 @@
 -- Window snapping: half-screen, centering, and cycling presets.
---   Ctrl+Alt + Left/Right/Up/Down -> fill that half of the screen
+--   Ctrl+Alt + Left/Right/Down    -> fill that half of the screen
+--   Ctrl+Alt + Up                 -> extend to full screen height (keep width/x)
 --   Ctrl+Alt + C                  -> recenter (keeps current size)
 --   Ctrl+Alt + U                  -> cycle corner quarters (clockwise from nearest)
 --   Ctrl+Alt + D                  -> cycle vertical thirds (left -> center -> right, from nearest)
@@ -23,7 +24,11 @@ local function frameFor(position, win)
         f.x = max.x + max.w / 2
         f.w = max.w / 2
     elseif position == "up" then
-        f.h = max.h / 2
+        -- Keep the window's current width/x; extend it to fill the full
+        -- screen height (top and bottom edges to the very ends).
+        local cur = win:frame()
+        f.x = cur.x
+        f.w = cur.w
     elseif position == "down" then
         f.y = max.y + max.h / 2
         f.h = max.h / 2
