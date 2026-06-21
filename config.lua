@@ -24,6 +24,10 @@ return {
         accelRate = 1,
         interval = 0.02,
         minSize  = 100,
+        -- Magnetic snapping while moving (Ctrl+Shift + arrows): when a window
+        -- edge comes within this many px of another window's edge or a screen
+        -- edge, it snaps flush. Keep pushing to break free. 0 disables.
+        snapDistance = 24,
     },
 
     -- Paired-edge resizing: when you drag one window's edge, a neighbouring
