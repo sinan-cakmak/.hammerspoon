@@ -11,7 +11,7 @@ local log = util.logger("throw")
 local M = {}
 
 function M.start()
-    local zones    = cfg.throw.zones
+    local profiles = cfg.throw.profiles or {}
     local deadzone = cfg.throw.deadzone
     local animation = cfg.throw.animation or 0
 
@@ -23,6 +23,19 @@ function M.start()
     local timer  = nil
     local flagsTap = nil
     local count  = 0
+    local zones  = nil   -- zone set for the screen of the current throw
+
+    -- Find the throw profile matching a screen's full resolution, if any.
+    local function profileForScreen(screen)
+        if not screen then return nil end
+        local ff = screen:fullFrame()
+        for _, p in ipairs(profiles) do
+            if math.abs(ff.w - p.screen.w) < 2 and math.abs(ff.h - p.screen.h) < 2 then
+                return p
+            end
+        end
+        return nil
+    end
 
     -- Persistent overlay canvases, created once and reused (never recreated per
     -- throw -- doing that previously caused Hammerspoon to lag after a few uses).
@@ -141,6 +154,15 @@ function M.start()
         end
         count = count + 1
         origin = hs.mouse.absolutePosition()
+
+        -- Only activate on a display that has a matching throw profile.
+        local profile = profileForScreen(hs.mouse.getCurrentScreen())
+        if not profile then
+            log("startThrow #%d: no throw profile for current screen -- ignoring", count)
+            return
+        end
+        zones = profile.zones
+
         window = windowUnderPoint(origin)
         if not window then
             log("startThrow #%d: no window under cursor at (%.0f,%.0f)", count, origin.x, origin.y)
