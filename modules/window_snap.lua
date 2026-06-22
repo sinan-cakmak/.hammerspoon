@@ -2,6 +2,7 @@
 --   Ctrl+Alt + Left/Right/Down    -> fill that half of the screen
 --   Ctrl+Alt + Up                 -> extend to full screen height (keep width/x)
 --   Ctrl+Alt + C                  -> recenter (keeps current size)
+--   Ctrl+Alt + Return             -> maximize to fill the whole display
 --   Ctrl+Alt + U                  -> cycle corner quarters (clockwise from nearest)
 --   Ctrl+Alt + D                  -> cycle vertical thirds (left -> center -> right, from nearest)
 --   Ctrl+Alt + Delete             -> revert the last snap (press again to toggle back)
@@ -56,6 +57,9 @@ local function frameFor(position, win)
     elseif position == "rightthird" then
         f.x = max.x + max.w * 2 / 3
         f.w = max.w / 3
+    elseif position == "maximize" then
+        -- Fill the whole screen (full work area, not macOS fullscreen mode).
+        -- f already equals max, so nothing more to do.
     elseif position == "center" then
         -- Keep the window's current size; just recenter it on the screen
         local cur = win:frame()
@@ -145,6 +149,7 @@ function M.start()
     hs.hotkey.bind(mods, "Up",    function() snapWindow("up") end)
     hs.hotkey.bind(mods, "Down",  function() snapWindow("down") end)
     hs.hotkey.bind(mods, "c",     function() snapWindow("center") end)
+    hs.hotkey.bind(mods, "Return", function() snapWindow("maximize") end)
 
     -- Corner quarters, cycled clockwise starting from the nearest corner.
     hs.hotkey.bind(mods, "u", function()
