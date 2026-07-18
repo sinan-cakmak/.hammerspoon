@@ -112,34 +112,47 @@ local function frameCenter(f)
     return {x = f.x + f.w / 2, y = f.y + f.h / 2}
 end
 
+-- Per-window cycle progress: which slot we last placed the window in, plus the
+-- frame it ACTUALLY ended up with. We compare new presses against that real
+-- frame -- not the ideal slot frame -- so apps that clamp their size (e.g. Slack
+-- refusing to shrink to a narrow third) are still recognised as "in this slot",
+-- letting the next press advance instead of getting stuck re-snapping in place.
+local cycleState = {}  -- winId -> {name = cycleName, index = i, frame = actualFrame}
+
+-- Place the window in order[index] and record the resulting (possibly clamped) frame.
+local function placeInCycle(win, name, order, index)
+    applyFrame(win, frameFor(order[index], win))
+    cycleState[win:id()] = {name = name, index = index, frame = win:frame()}
+end
+
 -- Cycle the focused window through an ordered list of named positions.
--- If the window already occupies one of them, advance to the next (wrapping);
--- otherwise jump to whichever slot's center is closest to the window's center.
-local function cycle(order)
+-- If the window is still sitting where we last placed it, advance to the next
+-- (wrapping); otherwise jump to whichever slot's center is closest.
+local function cycle(name, order)
     local win = hs.window.focusedWindow()
     if not win then return end
+    local id = win:id()
     local cur = win:frame()
 
-    -- Already in a slot? -> advance to the next one.
-    for i, pos in ipairs(order) do
-        if framesMatch(cur, frameFor(pos, win)) then
-            local nextPos = order[(i % #order) + 1]
-            applyFrame(win, frameFor(nextPos, win))
-            return
-        end
+    -- Still where we left it? -> advance to the next slot. Comparing against the
+    -- recorded real frame (rather than the ideal) is what makes clamped apps work.
+    local st = cycleState[id]
+    if st and st.name == name and framesMatch(cur, st.frame) then
+        placeInCycle(win, name, order, (st.index % #order) + 1)
+        return
     end
 
-    -- Otherwise snap to the nearest slot by center distance.
+    -- Fresh entry (or the window was moved): snap to the nearest slot by center.
     local c = frameCenter(cur)
-    local bestPos, bestDist
-    for _, pos in ipairs(order) do
+    local bestIndex, bestDist
+    for i, pos in ipairs(order) do
         local pc = frameCenter(frameFor(pos, win))
         local d = (pc.x - c.x) ^ 2 + (pc.y - c.y) ^ 2
         if not bestDist or d < bestDist then
-            bestDist, bestPos = d, pos
+            bestDist, bestIndex = d, i
         end
     end
-    applyFrame(win, frameFor(bestPos, win))
+    placeInCycle(win, name, order, bestIndex)
 end
 
 function M.start()
@@ -153,12 +166,12 @@ function M.start()
 
     -- Corner quarters, cycled clockwise starting from the nearest corner.
     hs.hotkey.bind(mods, "u", function()
-        cycle({"topleft", "topright", "bottomright", "bottomleft"})
+        cycle("quarters", {"topleft", "topright", "bottomright", "bottomleft"})
     end)
 
     -- Vertical thirds, cycled left -> center -> right starting from the nearest.
     hs.hotkey.bind(mods, "d", function()
-        cycle({"leftthird", "centerthird", "rightthird"})
+        cycle("thirds", {"leftthird", "centerthird", "rightthird"})
     end)
 
     -- Revert the last snap (toggles between current and previous frame).

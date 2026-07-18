@@ -14,6 +14,7 @@ return {
         shrinkDir = {"ctrl", "shift", "alt"},   -- directional shrink
         snap      = {"ctrl", "alt"},            -- half-screen snapping + center
         throw     = {"cmd", "alt"},             -- quick throw (held)
+        display   = {"ctrl", "alt", "cmd"},     -- send window to another display
         debugKey  = {"ctrl", "shift", "alt"},   -- diagnostics
     },
 

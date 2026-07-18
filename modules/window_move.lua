@@ -1,7 +1,7 @@
 -- Held-arrow window movement and resizing, with acceleration.
 --   Move:               Ctrl+Shift + Arrows  (magnetically snaps to nearby
 --                       window/screen edges; keep pushing to break free)
---   Centered resize:    Ctrl+Shift + (-)  /  (*)
+--   Centered resize:    Ctrl+Alt + (-)  /  (*)
 --   Directional expand: Ctrl+Shift + ı/k/j/l   (top/bottom/left/right)
 --   Directional shrink: Ctrl+Shift+Alt + ı/k/j/l
 --   (the dragged edge also magnetically snaps to nearby window/screen edges)
@@ -281,6 +281,7 @@ function M.start()
 
     local move      = cfg.mods.move
     local shrinkDir = cfg.mods.shrinkDir
+    local snap      = cfg.mods.snap
 
     -- Movement
     bindHold(move, "Up",    "up")
@@ -289,8 +290,8 @@ function M.start()
     bindHold(move, "Right", "right")
 
     -- Centered resizing
-    bindHold(move, "-", "shrink")
-    bindHold(move, "*", "grow")
+    bindHold(snap, "-", "shrink")
+    bindHold(snap, "*", "grow")
 
     -- Directional expanding (ı/k/j/l = top/bottom/left/right)
     bindHold(move, "ı", "growTop")

@@ -14,13 +14,17 @@ tweak, and extend.
 ## Features
 
 - **Held-arrow move & resize** with acceleration.
-- **Snapping**: halves, corner quarters, and vertical thirds.
+- **Magnetic edge-snapping**: while moving or resizing with the keyboard, edges
+  snap flush to nearby window and screen edges so windows butt together instead
+  of overlapping — keep pushing to break free.
+- **Snapping**: halves, full height, maximize, corner quarters, vertical thirds.
 - **Cycling presets**: one key steps through corners (clockwise) or thirds
   (left→right), starting from whichever slot is nearest.
 - **Revert / toggle**: undo the last snap, press again to toggle back.
 - **Quick throw**: hold `Cmd+Option`, a white dot locks onto the cursor, flick
   the mouse toward a zone, release to drop the window there — with a live
-  preview overlay.
+  preview overlay. Zones are defined per display profile.
+- **Multi-display**: send the focused window to the previous/next display.
 - **Recenter** a window without changing its size.
 - **Paired-edge resizing**: drag the shared edge between two adjacent windows and
   the neighbour resizes too, keeping the seam glued (tiling-style).
@@ -50,7 +54,7 @@ first, then clone this repo into place:
 [ -e ~/.hammerspoon ] && mv ~/.hammerspoon ~/.hammerspoon.backup
 
 # Clone this repo as your Hammerspoon config
-git clone https://github.com/sinan-cakmak/.hammerspoon/tree/main ~/.hammerspoon
+git clone https://github.com/sinan-cakmak/.hammerspoon/ ~/.hammerspoon
 ```
 
 Then:
@@ -73,23 +77,44 @@ Then:
 | Keys                             | Action                                    |
 | -------------------------------- | ----------------------------------------- |
 | `Ctrl+Shift + ← ↑ → ↓`           | Move the window (accelerates while held)  |
-| `Ctrl+Shift + *`                 | Grow (centered)                           |
-| `Ctrl+Shift + -`                 | Shrink (centered)                         |
 | `Ctrl+Shift + ı / k / j / l`     | Expand toward top / bottom / left / right |
 | `Ctrl+Shift+Alt + ı / k / j / l` | Shrink from top / bottom / left / right   |
+
+Moving and directional resizing are **magnetic**: the moving edge snaps flush
+when it comes within `move.snapDistance` (24px) of a neighbouring window's edge
+or a screen edge. Keep holding the key to push past the magnet.
 
 ### Snapping & cycling — `Ctrl + Option`
 
 | Keys                    | Action                                                         |
 | ----------------------- | -------------------------------------------------------------- |
-| `Ctrl+Option + ← → ↑ ↓` | Fill the left / right / top / bottom half                      |
+| `Ctrl+Option + ← →`     | Fill the left / right half                                     |
+| `Ctrl+Option + ↑`       | Extend to full screen height (keeps width and x position)      |
+| `Ctrl+Option + ↓`       | Fill the bottom half                                           |
+| `Ctrl+Option + Return`  | Maximize to fill the whole display (not macOS fullscreen)      |
+| `Ctrl+Option + *`       | Grow (centered)                                                |
+| `Ctrl+Option + -`       | Shrink (centered)                                              |
 | `Ctrl+Option + U`       | Cycle corner quarters, clockwise from the nearest              |
 | `Ctrl+Option + D`       | Cycle vertical thirds (left → center → right) from the nearest |
 | `Ctrl+Option + C`       | Recenter the window (keeps its current size)                   |
 | `Ctrl+Option + Delete`  | Revert the last snap (press again to toggle back)              |
 
 **Cycling behavior:** if the window isn't already in one of the cycle's slots, it
-snaps to the nearest one; if it already is, it advances to the next.
+snaps to the nearest one; if it already is, it advances to the next. Cycle
+progress is tracked against the frame the window *actually* ended up with, so
+apps that refuse to shrink past a minimum size (e.g. Slack) still advance
+through the slots instead of getting stuck.
+
+### Multi-display — `Ctrl + Option + Cmd`
+
+| Keys                      | Action                                       |
+| ------------------------- | -------------------------------------------- |
+| `Ctrl+Option+Cmd + ← →`   | Send the window to the previous / next display |
+
+Displays are ordered left-to-right by their physical position, and the cycle
+wraps around — so with two monitors this toggles back and forth. The window is
+scaled proportionally onto the target display and kept fully on screen. A no-op
+when only one display is connected.
 
 ### Quick throw — `Cmd + Option` (hold)
 
@@ -122,11 +147,14 @@ Releasing without moving past the deadzone does nothing.
 ├── init.lua              # Thin loader: lists and starts modules
 ├── config.lua            # All tunables (modifiers, accent, throw zones, steps)
 ├── lib/
-│   └── util.lua          # Shared helpers (color, logger)
+│   ├── util.lua          # Shared helpers (color, logger)
+│   └── coupling.lua      # Suppression flag so programmatic moves don't
+│                         #   drag neighbours via paired-edge resizing
 └── modules/
-    ├── window_move.lua   # Held-arrow move / resize engine
-    ├── window_snap.lua   # Halves, corner/third cycling, recenter, revert
+    ├── window_move.lua   # Held-arrow move / resize engine + magnetic snapping
+    ├── window_snap.lua   # Halves, maximize, corner/third cycling, recenter, revert
     ├── window_throw.lua  # Cmd+Option quick throw
+    ├── window_display.lua # Send the window between displays
     ├── window_tile_resize.lua # Paired-edge resizing of adjacent windows
     └── app_control.lua   # Unminimize, app utilities
 ```
@@ -142,26 +170,44 @@ All tunables live in [`config.lua`](config.lua):
 
 - **`mods`** — the modifier combos for each feature group.
 - **`accent`** — the overlay color (azure by default).
-- **`move`** — step sizes, acceleration, timer interval, minimum window size.
-- **`throw`** — the cursor deadzone, drop animation, and target zones.
+- **`move`** — step sizes, acceleration, timer interval, minimum window size, and
+  `snapDistance` (magnetic snap radius in px; `0` disables magnetism).
+- **`throw`** — the cursor deadzone, drop animation, and per-display zone profiles.
 - **`tile`** — paired-edge resizing: toggle, edge tolerance, neighbour min size.
 - **`debug`** — set `true` to write logs to `/tmp/hs.log`.
 
 ### Customizing throw zones
 
-The throw `zones` in `config.lua` are absolute screen coordinates
-(`x, y, w, h`) and are specific to the display they were captured on. To set
-your own, position a window exactly where you want a zone, then read its frame.
+Throw zones are grouped into **per-display profiles**. A throw only activates
+when the screen under the cursor matches a profile's resolution, so a layout
+tuned for one monitor won't fire on another. Each profile looks like:
 
-With Hammerspoon running, open the **Console** (menu-bar icon → Console) and run:
+```lua
+throw = {
+    profiles = {
+        {
+            name = "ultrawide 32:9 (5120x1440)",
+            screen = {w = 5120, h = 1440},  -- full display resolution to match
+            zones = {
+                left  = {x = 0, y = 30, w = 1069, h = 1410},
+                -- ... right / up / down and the four corners
+            },
+        },
+    },
+},
+```
+
+Zone values are absolute screen coordinates (`x, y, w, h`). To capture your own,
+position a window exactly where you want a zone, then with Hammerspoon running
+open the **Console** (menu-bar icon → Console) and run:
 
 ```lua
 hs.inspect(hs.window.focusedWindow():frame())
 ```
 
-Repeat for each direction (left / right / up / down) and paste the values into
-`config.throw.zones`. Coordinates are global across all displays, so zones can
-live on any monitor.
+Repeat for each direction (left / right / up / down and the corners) and paste
+the values into that profile's `zones`. To support another monitor, add a new
+entry to `profiles` with its resolution and zones.
 
 ---
 
