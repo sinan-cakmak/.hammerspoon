@@ -25,6 +25,8 @@ tweak, and extend.
   the mouse toward a zone, release to drop the window there — with a live
   preview overlay. Zones are defined per display profile.
 - **Multi-display**: send the focused window to the previous/next display.
+- **Click points**: `Fn+F1` / `Fn+F2` click a configured spot on screen, with a
+  calibration hotkey for measuring the coordinates.
 - **Recenter** a window without changing its size.
 - **Paired-edge resizing**: drag the shared edge between two adjacent windows and
   the neighbour resizes too, keeping the seam glued (tiling-style).
@@ -130,7 +132,9 @@ Releasing without moving past the deadzone does nothing.
 
 | Keys                 | Action                                                |
 | -------------------- | ----------------------------------------------------- |
+| `Fn+F1` / `Fn+F2`    | Click a fixed spot on screen (see [Click points](#click-points)) |
 | `Cmd+Shift + M`      | Unminimize the frontmost app's first minimized window |
+| `Ctrl+Shift+Alt + C` | Calibration: show the `rx`/`ry` under the cursor      |
 | `Ctrl+Shift+Alt + D` | Dump quick-throw diagnostics to the log               |
 
 > **Keyboard layout note:** the move/resize bindings use the `ı` (dotless i)
@@ -156,6 +160,7 @@ Releasing without moving past the deadzone does nothing.
     ├── window_throw.lua  # Cmd+Option quick throw
     ├── window_display.lua # Send the window between displays
     ├── window_tile_resize.lua # Paired-edge resizing of adjacent windows
+    ├── click_points.lua  # Fn+F1 / Fn+F2 click fixed screen spots
     └── app_control.lua   # Unminimize, app utilities
 ```
 
@@ -174,7 +179,26 @@ All tunables live in [`config.lua`](config.lua):
   `snapDistance` (magnetic snap radius in px; `0` disables magnetism).
 - **`throw`** — the cursor deadzone, drop animation, and per-display zone profiles.
 - **`tile`** — paired-edge resizing: toggle, edge tolerance, neighbour min size.
+- **`clicks`** — the `Fn+F1`/`Fn+F2` click targets and cursor-restore toggle.
 - **`debug`** — set `true` to write logs to `/tmp/hs.log`.
+
+### Click points
+
+`Fn+F1` and `Fn+F2` click a fixed spot on the main display — useful for buttons
+in a fullscreen app you hit constantly. Targets live in `config.clicks.points`
+as **fractions** of the display (`rx`/`ry`, 0–1) so they survive a resolution
+change; set `x`/`y` instead to pin absolute coordinates.
+
+Fractions measured on one display are only approximate on another — a centered,
+letterboxed layout shifts when the aspect ratio changes. **Calibrate on the
+machine you'll actually use:** put the cursor over the target, press
+`Ctrl+Shift+Alt + C`, and an alert shows the exact `rx`/`ry` to paste into
+`config.lua`.
+
+> The bindings are registered on bare `F1`/`F2`. With default macOS settings the
+> top row sends brightness/media events and only `Fn+F1` delivers a real F1
+> keycode. If **Use F1, F2, etc. keys as standard function keys** is enabled in
+> System Settings → Keyboard, plain `F1` triggers it instead.
 
 ### Customizing throw zones
 

@@ -31,6 +31,27 @@ return {
         snapDistance = 24,
     },
 
+    -- Hotkeys that click a fixed spot on screen (see modules/click_points.lua).
+    --
+    -- Points are stored as FRACTIONS of the main display (rx/ry, 0-1) rather
+    -- than pixels, so they survive a change of resolution. They are still only
+    -- as good as the display they were measured on -- a layout that is centered
+    -- and letterboxed (like a fullscreen web app) shifts when the aspect ratio
+    -- changes. Calibrate on the target machine with the calibrate hotkey, which
+    -- prints the exact rx/ry under the cursor.
+    --
+    -- Set `x`/`y` on a point instead to pin it to absolute coordinates.
+    clicks = {
+        restoreCursor = true,  -- put the pointer back where it was after clicking
+        points = {
+            -- The two table tabs in the top-left toolbar, left then right. Same
+            -- height (ry), different horizontal offset (rx).
+            -- Measured off a 1280x800 screenshot -- CALIBRATE BEFORE RELYING ON THESE.
+            f1 = {rx = 0.0516, ry = 0.1413},  -- left tab
+            f2 = {rx = 0.0969, ry = 0.1413},  -- right tab
+        },
+    },
+
     -- Paired-edge resizing: when you drag one window's edge, a neighbouring
     -- window sharing that edge resizes too, keeping the common seam glued.
     tile = {
