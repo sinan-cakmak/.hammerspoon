@@ -1,13 +1,11 @@
 -- Click a fixed spot on screen from a hotkey.
---   Fn+F1              -> click the point configured as "f1" (left tab)
---   Fn+F2              -> click the point configured as "f2" (right tab)
+--   Cmd+F1             -> click the point configured as "f1" (left tab)
+--   Cmd+F2             -> click the point configured as "f2" (right tab)
 --   Ctrl+Shift+Alt + C -> calibration: show/log the rx/ry under the cursor
 --
--- Binding is to bare "f1"/"f2" with no modifiers on purpose. With default macOS
--- settings the top row sends media/brightness events and only Fn+F1 delivers a
--- real F1 keycode -- which is exactly the chord we want. (If "Use F1, F2 as
--- standard function keys" is enabled, plain F1 fires it instead.) hs.hotkey has
--- no "fn" modifier, so this is the way to express it.
+-- Binding Cmd as a modifier forces macOS to treat F1/F2 as real function keys
+-- regardless of the "Use F1, F2 as standard function keys" setting, so the
+-- brightness keys keep working while Cmd+F1/F2 fire these clicks.
 
 local cfg  = require("config")
 local util = require("lib.util")
@@ -39,7 +37,15 @@ local function clickPoint(name)
     end
 
     local origin = hs.mouse.absolutePosition()
-    hs.eventtap.leftClick(pt)
+
+    -- Post the click with modifier flags explicitly cleared. The hotkey uses
+    -- Cmd, and Cmd is still physically held when this runs -- a plain
+    -- hs.eventtap.leftClick would inherit that and deliver a Cmd+click, which a
+    -- web page treats very differently from a normal click (e.g. open-in-new-tab
+    -- instead of selecting). setFlags({}) makes it a real, unmodified click.
+    local ev = hs.eventtap.event
+    ev.newMouseEvent(ev.types.leftMouseDown, pt):setFlags({}):post()
+    ev.newMouseEvent(ev.types.leftMouseUp, pt):setFlags({}):post()
     log("clicked '%s' at (%.0f, %.0f)", name, pt.x, pt.y)
 
     -- Put the pointer back, so the hotkey doesn't yank the cursor across the
@@ -65,8 +71,8 @@ local function calibrate()
 end
 
 function M.start()
-    hs.hotkey.bind({}, "f1", function() clickPoint("f1") end)
-    hs.hotkey.bind({}, "f2", function() clickPoint("f2") end)
+    hs.hotkey.bind({"cmd"}, "f1", function() clickPoint("f1") end)
+    hs.hotkey.bind({"cmd"}, "f2", function() clickPoint("f2") end)
     hs.hotkey.bind(cfg.mods.debugKey, "c", calibrate)
 end
 
