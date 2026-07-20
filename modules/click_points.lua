@@ -3,9 +3,14 @@
 --   Cmd+F2             -> click the point configured as "f2" (right tab)
 --   Ctrl+Shift+Alt + C -> calibration: show/log the rx/ry under the cursor
 --
--- Binding Cmd as a modifier forces macOS to treat F1/F2 as real function keys
--- regardless of the "Use F1, F2 as standard function keys" setting, so the
--- brightness keys keep working while Cmd+F1/F2 fire these clicks.
+-- The top row is dual-purpose. With the default macOS setting ("Use F1, F2 as
+-- standard function keys" OFF), F1/F2 emit brightness signals, not F1/F2
+-- keycodes -- so hs.hotkey never sees them unless Fn is also held. We therefore
+-- bind BOTH ways so plain Cmd+F1/F2 works regardless of that setting:
+--   1. hs.hotkey on Cmd+F1/F2   -- fires when F-keys ARE standard keycodes.
+--   2. a systemDefined event tap -- catches the brightness keys directly (the
+--      default), fires when Cmd is held, and swallows the event so brightness
+--      doesn't change.
 
 local cfg  = require("config")
 local util = require("lib.util")
@@ -70,10 +75,35 @@ local function calibrate()
         rx, ry, pt.x, pt.y, f.w, f.h), 4)
 end
 
+-- Brightness key (systemKey name) -> configured click point.
+-- On MacBooks F1 is brightness-down and F2 is brightness-up.
+local BRIGHTNESS_TO_POINT = {
+    BRIGHTNESS_DOWN = "f1",
+    BRIGHTNESS_UP   = "f2",
+}
+
+-- Kept at module scope so the event tap isn't garbage-collected after start().
+local brightnessTap = nil
+
 function M.start()
+    -- Path 1: real F1/F2 keycodes (standard-function-keys mode, or Fn held).
     hs.hotkey.bind({"cmd"}, "f1", function() clickPoint("f1") end)
     hs.hotkey.bind({"cmd"}, "f2", function() clickPoint("f2") end)
     hs.hotkey.bind(cfg.mods.debugKey, "c", calibrate)
+
+    -- Path 2: the default media-key behaviour. Catch Cmd + brightness-down/up
+    -- and fire the click instead, swallowing the event so brightness is
+    -- unaffected. When Cmd isn't held we return false, leaving brightness normal.
+    brightnessTap = hs.eventtap.new({hs.eventtap.event.types.systemDefined}, function(e)
+        local d = e:systemKey()
+        if not d or not d.down then return false end
+        local point = BRIGHTNESS_TO_POINT[d.key]
+        if not point then return false end
+        if not e:getFlags().cmd then return false end
+        clickPoint(point)
+        return true  -- consume: don't also change screen brightness
+    end)
+    brightnessTap:start()
 end
 
 return M

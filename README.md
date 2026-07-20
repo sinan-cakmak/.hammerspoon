@@ -195,9 +195,10 @@ machine you'll actually use:** put the cursor over the target, press
 `Ctrl+Shift+Alt + C`, and an alert shows the exact `rx`/`ry` to paste into
 `config.lua`.
 
-> Holding `Cmd` makes macOS treat `F1`/`F2` as real function keys regardless of
-> the **Use F1, F2, etc. keys as standard function keys** setting, so the
-> hardware brightness keys keep working while `Cmd+F1`/`Cmd+F2` fire the clicks.
+> Plain `Cmd+F1`/`Cmd+F2` works whether or not **Use F1, F2, etc. keys as
+> standard function keys** is enabled: the module binds the real F1/F2 keycodes
+> *and* intercepts the brightness keys (which is what the top row emits by
+> default), firing on either. Brightness only changes when `Cmd` isn't held.
 
 ### Customizing throw zones
 
