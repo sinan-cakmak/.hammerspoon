@@ -15,6 +15,7 @@ return {
         snap      = {"ctrl", "alt"},            -- half-screen snapping + center
         throw     = {"cmd", "alt"},             -- quick throw (held)
         display   = {"ctrl", "alt", "cmd"},     -- send window to another display
+        search    = {"ctrl", "alt", "cmd"},     -- search selected text
         debugKey  = {"ctrl", "shift", "alt"},   -- diagnostics
     },
 

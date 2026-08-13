@@ -27,6 +27,8 @@ tweak, and extend.
 - **Multi-display**: send the focused window to the previous/next display.
 - **Click points**: `Fn+F1` / `Fn+F2` click a configured spot on screen, with a
   calibration hotkey for measuring the coordinates.
+- **Search selected text**: send the active word or phrase to Google in the
+  default browser without replacing the clipboard.
 - **Recenter** a window without changing its size.
 - **Coupled window edges**: resize or move a window and every adjacent window
   touching one of its edges resizes too. Changes propagate through shared
@@ -135,6 +137,7 @@ Releasing without moving past the deadzone does nothing.
 | -------------------- | ----------------------------------------------------- |
 | `Cmd+F1` / `Cmd+F2`  | Click a fixed spot on screen (see [Click points](#click-points)) |
 | `Cmd+Shift + M`      | Unminimize the frontmost app's first minimized window |
+| `Ctrl+Option+Cmd + G` | Google the actively selected word or phrase |
 | `Ctrl+Shift+Alt + C` | Calibration: show the `rx`/`ry` under the cursor      |
 | `Ctrl+Shift+Alt + D` | Dump quick-throw diagnostics to the log               |
 
@@ -162,6 +165,7 @@ Releasing without moving past the deadzone does nothing.
     ├── window_display.lua # Send the window between displays
     ├── window_tile_resize.lua # Coupled movement/resizing of adjacent windows
     ├── click_points.lua  # Fn+F1 / Fn+F2 click fixed screen spots
+    ├── search_selection.lua # Google selected text in the default browser
     └── app_control.lua   # Unminimize, app utilities
 ```
 

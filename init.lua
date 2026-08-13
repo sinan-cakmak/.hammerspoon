@@ -10,6 +10,7 @@ local modules = {
     "modules.window_display", -- Ctrl+Alt+Cmd send window between displays
     "modules.window_tile_resize", -- coupled movement/resizing of adjacent windows
     "modules.click_points",  -- Fn+F1 / Fn+F2 click fixed screen spots
+    "modules.search_selection", -- search selected text in the default browser
     "modules.app_control",   -- unminimize, etc.
 }
 
