@@ -40,16 +40,20 @@ snap distances, throw zones, colors. Prefer adding a config key over hardcoding.
 ### Cross-module coupling (the non-obvious part)
 
 `modules/window_tile_resize.lua` subscribes to `windowMoved` events for *every*
-window and resizes neighbours that share a dragged edge. Programmatic frame
-changes fire the same events, which would make unrelated windows follow along.
+window and resizes neighbours that share an edge with a resized or moved window.
+Programmatic frame changes fire the same events, which would make unrelated
+windows follow along.
 `lib/coupling.lua` is the shared, time-based suppression flag that prevents this:
 **any module that moves a window programmatically must call
 `coupling.suspend(win:id())` first** (see `window_throw.lua`, `window_display.lua`).
 It is time-based because the events arrive asynchronously, after the `setFrame`.
 
-That module also distinguishes a *resize* from a *move* by checking that one edge
-moved while its opposite edge stayed put — if both opposite edges shift, it's a
-drag and gets ignored.
+That module distinguishes a one-sided *resize* from a *move*: one moved edge
+drives its neighbour during a resize, while two equally translated opposite
+edges drive neighbours on both sides during a move. If both opposite edges move
+by different amounts (such as a centred resize), coupling is ignored. Updates
+are propagated synchronously through changed neighbours so every window along a
+T-junction seam follows, rather than stopping after the first adjacent window.
 
 ### Two state-tracking patterns worth understanding before editing
 

@@ -76,9 +76,10 @@ end
 local prevFrames = {}
 
 -- Set a window's frame, first stashing its current frame for revert/toggle.
+-- The 0 duration disables the default ~0.2s slide animation, so snaps are instant.
 local function applyFrame(win, newFrame)
     prevFrames[win:id()] = win:frame()
-    win:setFrame(newFrame)
+    win:setFrame(newFrame, 0)
 end
 
 -- Restore the focused window's pre-snap frame. Swaps current<->saved so
@@ -90,7 +91,7 @@ local function revert()
     local saved = prevFrames[id]
     if not saved then return end
     prevFrames[id] = win:frame()
-    win:setFrame(saved)
+    win:setFrame(saved, 0)  -- 0 = instant, matching applyFrame
 end
 
 local function snapWindow(position)

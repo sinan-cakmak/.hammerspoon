@@ -52,8 +52,9 @@ return {
         },
     },
 
-    -- Paired-edge resizing: when you drag one window's edge, a neighbouring
-    -- window sharing that edge resizes too, keeping the common seam glued.
+    -- Coupled edges: when you resize or move a window, every neighbouring
+    -- window sharing one of its edges resizes to keep the common seam glued;
+    -- this propagates through common neighbours at T-junctions.
     tile = {
         enabled = true,
         edgeTolerance = 12,  -- px gap still treated as a shared edge

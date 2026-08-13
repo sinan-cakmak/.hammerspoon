@@ -8,7 +8,7 @@ local modules = {
     "modules.window_snap",   -- half-screen snapping + center
     "modules.window_throw",  -- Cmd+Alt quick throw
     "modules.window_display", -- Ctrl+Alt+Cmd send window between displays
-    "modules.window_tile_resize", -- paired-edge resizing of adjacent windows
+    "modules.window_tile_resize", -- coupled movement/resizing of adjacent windows
     "modules.click_points",  -- Fn+F1 / Fn+F2 click fixed screen spots
     "modules.app_control",   -- unminimize, etc.
 }

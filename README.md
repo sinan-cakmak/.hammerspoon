@@ -28,8 +28,9 @@ tweak, and extend.
 - **Click points**: `Fn+F1` / `Fn+F2` click a configured spot on screen, with a
   calibration hotkey for measuring the coordinates.
 - **Recenter** a window without changing its size.
-- **Paired-edge resizing**: drag the shared edge between two adjacent windows and
-  the neighbour resizes too, keeping the seam glued (tiling-style).
+- **Coupled window edges**: resize or move a window and every adjacent window
+  touching one of its edges resizes too. Changes propagate through shared
+  neighbours, keeping every window along a T-junction seam aligned.
 - **Unminimize** the frontmost app's minimized window.
 
 ---
@@ -152,14 +153,14 @@ Releasing without moving past the deadzone does nothing.
 ├── config.lua            # All tunables (modifiers, accent, throw zones, steps)
 ├── lib/
 │   ├── util.lua          # Shared helpers (color, logger)
-│   └── coupling.lua      # Suppression flag so programmatic moves don't
-│                         #   drag neighbours via paired-edge resizing
+│   └── coupling.lua      # Suppression flag so placement operations don't
+│                         #   resize neighbours via coupled edges
 └── modules/
     ├── window_move.lua   # Held-arrow move / resize engine + magnetic snapping
     ├── window_snap.lua   # Halves, maximize, corner/third cycling, recenter, revert
     ├── window_throw.lua  # Cmd+Option quick throw
     ├── window_display.lua # Send the window between displays
-    ├── window_tile_resize.lua # Paired-edge resizing of adjacent windows
+    ├── window_tile_resize.lua # Coupled movement/resizing of adjacent windows
     ├── click_points.lua  # Fn+F1 / Fn+F2 click fixed screen spots
     └── app_control.lua   # Unminimize, app utilities
 ```
@@ -178,7 +179,7 @@ All tunables live in [`config.lua`](config.lua):
 - **`move`** — step sizes, acceleration, timer interval, minimum window size, and
   `snapDistance` (magnetic snap radius in px; `0` disables magnetism).
 - **`throw`** — the cursor deadzone, drop animation, and per-display zone profiles.
-- **`tile`** — paired-edge resizing: toggle, edge tolerance, neighbour min size.
+- **`tile`** — coupled move/resizing: toggle, edge tolerance, neighbour min size.
 - **`clicks`** — the `Fn+F1`/`Fn+F2` click targets and cursor-restore toggle.
 - **`debug`** — set `true` to write logs to `/tmp/hs.log`.
 

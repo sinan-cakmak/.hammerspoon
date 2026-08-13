@@ -43,7 +43,7 @@ local function moveToAdjacentScreen(delta)
 
     local target = screens[((index - 1 + delta) % #screens) + 1]
 
-    -- Programmatic move: don't let paired-edge resizing drag neighbours along.
+    -- Display placement should not resize touching neighbours along the way.
     coupling.suspend(win:id())
 
     -- Scale proportionally so the window keeps its relative place and size on a

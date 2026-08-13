@@ -1,4 +1,4 @@
--- Shared, short-lived suppression flag for paired-edge resizing.
+-- Shared, short-lived suppression flag for coupled-edge movement/resizing.
 --
 -- Programmatic frame changes (e.g. quick throw) fire the same windowMoved
 -- events as a manual drag, which would make the tile-resize module drag
