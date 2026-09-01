@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Vertical Tab Keyboard Navigation",
+  "version": "1.1.0",
+  "description": "Navigate and select adjacent Chrome tabs with vertical arrow shortcuts.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "select-previous-tab": {
+      "suggested_key": {
+        "mac": "Alt+Shift+PageUp"
+      },
+      "description": "Select the previous tab and keep traversed tabs selected"
+    },
+    "select-next-tab": {
+      "suggested_key": {
+        "mac": "Alt+Shift+PageDown"
+      },
+      "description": "Select the next tab and keep traversed tabs selected"
+    }
+  }
+}

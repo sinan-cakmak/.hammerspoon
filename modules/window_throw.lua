@@ -10,8 +10,8 @@ local log = util.logger("throw")
 
 local M = {}
 
--- Replaced by start() once its private gesture state has been created. Keeping
--- this callable lets other Cmd+Option features safely cancel an armed throw.
+-- Replaced by start() once its private gesture state has been created. Other
+-- Cmd+Option features use this to ensure a keyboard chord cannot commit a throw.
 function M.cancel() end
 
 function M.start()
@@ -25,7 +25,7 @@ function M.start()
     local window = nil
     local dir    = nil
     local timer  = nil
-    local flagsTap = nil
+    local inputTap = nil
     local count  = 0
     local zones  = nil   -- zone set for the screen of the current throw
 
@@ -137,9 +137,7 @@ function M.start()
     end
 
     M.cancel = function()
-        if not active then return end
-        log("throw cancelled by another Cmd+Option shortcut")
-        endThrow(false)
+        if active then endThrow(false) end
     end
 
     local function tick()
@@ -191,8 +189,19 @@ function M.start()
 
     -- Activate as soon as Cmd+Option (and nothing else) is held; the timer
     -- commits on release. This also catches release via the flagsChanged event.
-    flagsTap = hs.eventtap.new({hs.eventtap.event.types.flagsChanged}, function(e)
+    inputTap = hs.eventtap.new({
+        hs.eventtap.event.types.flagsChanged,
+        hs.eventtap.event.types.keyDown,
+    }, function(e)
         local ok, err = pcall(function()
+            -- A real keyboard shortcut that begins with Cmd+Option takes
+            -- precedence over the mouse gesture. Do not consume the key event;
+            -- Chrome extensions and other apps still need to receive it.
+            if e:getType() == hs.eventtap.event.types.keyDown then
+                if active then endThrow(false) end
+                return
+            end
+
             local f = e:getFlags()
             if f.cmd and f.alt and not f.ctrl and not f.shift then
                 startThrow()
@@ -200,26 +209,26 @@ function M.start()
                 endThrow()
             end
         end)
-        if not ok then log("flagsTap ERROR: %s", tostring(err)) end
+        if not ok then log("inputTap ERROR: %s", tostring(err)) end
         return false
     end)
-    flagsTap:start()
-    log("flagsTap started, enabled=%s", tostring(flagsTap:isEnabled()))
+    inputTap:start()
+    log("inputTap started, enabled=%s", tostring(inputTap:isEnabled()))
 
     -- Watchdog: macOS will disable an eventtap if a callback ever stalls (the
     -- classic "stops working after a while"). Detect and re-enable it.
     hs.timer.doEvery(1, function()
-        if flagsTap and not flagsTap:isEnabled() then
-            log("WATCHDOG: flagsTap was DISABLED -- re-enabling")
-            flagsTap:start()
+        if inputTap and not inputTap:isEnabled() then
+            log("WATCHDOG: inputTap was DISABLED -- re-enabling")
+            inputTap:start()
         end
     end)
 
     -- Manual state dump
     hs.hotkey.bind(cfg.mods.debugKey, "d", function()
-        log("STATE DUMP: count=%d active=%s timer=%s flagsTapEnabled=%s",
+        log("STATE DUMP: count=%d active=%s timer=%s inputTapEnabled=%s",
             count, tostring(active), tostring(timer ~= nil),
-            tostring(flagsTap and flagsTap:isEnabled()))
+            tostring(inputTap and inputTap:isEnabled()))
     end)
 end
 

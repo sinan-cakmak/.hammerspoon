@@ -12,7 +12,8 @@ local modules = {
     "modules.click_points",  -- Fn+F1 / Fn+F2 click fixed screen spots
     "modules.search_selection", -- search selected text in the default browser
     "modules.finder_vscode", -- open active Finder directory in VS Code
-    "modules.chrome_tabs",   -- Cmd+Alt+Up/Down navigate Chrome tabs
+    "modules.spotify_space", -- centered Spotify window on its own Desktop
+    "modules.chrome_tabs",   -- Cmd+Alt arrow navigation for Chrome tabs
     "modules.app_control",   -- unminimize, etc.
 }
 

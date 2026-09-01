@@ -1,13 +1,15 @@
--- Chrome tab navigation for vertical-tab layouts.
---   Cmd+Option + Up   -> previous tab
---   Cmd+Option + Down -> next tab
+-- Chrome vertical-tab navigation.
+--
+-- Chrome extensions reject Command+Option shortcuts, so Hammerspoon owns the
+-- requested keys. Plain traversal is translated to Chrome's native horizontal
+-- shortcuts; Shift traversal is forwarded to private, valid extension commands
+-- that perform multi-tab selection through chrome.tabs.highlight().
 
 local cfg         = require("config")
 local windowThrow = require("modules.window_throw")
 
 local M = {}
 
--- Cover the regular release as well as the common Chrome preview channels.
 local chromeBundleIDs = {
     ["com.google.Chrome"]        = true,
     ["com.google.Chrome.beta"]   = true,
@@ -19,27 +21,41 @@ local function isChrome(app)
     return app and chromeBundleIDs[app:bundleID()] == true
 end
 
+local function addingShift(mods)
+    local result = {}
+    for _, modifier in ipairs(mods) do result[#result + 1] = modifier end
+    result[#result + 1] = "shift"
+    return result
+end
+
 function M.start()
     local hotkeys = {}
+    local selectMods = addingShift(cfg.mods.chromeTabs)
 
-    local function selectTab(direction)
+    local function sendChromeShortcut(modifiers, key)
         local chrome = hs.application.frontmostApplication()
         if not isChrome(chrome) then return end
 
-        -- Cmd+Option also arms quick throw. Cancel it before translating the
-        -- vertical arrow to Chrome's native previous/next-tab shortcut.
         windowThrow.cancel()
-        hs.eventtap.keyStroke(cfg.mods.chromeTabs, direction, 0, chrome)
+        hs.eventtap.keyStroke(modifiers, key, 0, chrome)
     end
 
-    local function bind(key, direction)
-        local callback = function() selectTab(direction) end
-        local hotkey = hs.hotkey.new(cfg.mods.chromeTabs, key, callback, nil, callback)
+    local function bind(modifiers, key, outputModifiers, outputKey)
+        local callback = function()
+            sendChromeShortcut(outputModifiers, outputKey)
+        end
+        local hotkey = hs.hotkey.new(modifiers, key, callback, nil, callback)
         hotkeys[#hotkeys + 1] = hotkey
     end
 
-    bind("Up", "Left")
-    bind("Down", "Right")
+    -- Chrome's native previous/next tab shortcuts.
+    bind(cfg.mods.chromeTabs, "Up", cfg.mods.chromeTabs, "Left")
+    bind(cfg.mods.chromeTabs, "Down", cfg.mods.chromeTabs, "Right")
+
+    -- Private extension shortcuts declared in manifest.json. Chrome treats Alt
+    -- as Option on macOS; PageUp/PageDown keep the bridge bindings unobtrusive.
+    bind(selectMods, "Up", {"alt", "shift"}, "PageUp")
+    bind(selectMods, "Down", {"alt", "shift"}, "PageDown")
 
     local function updateHotkeys()
         local enabled = isChrome(hs.application.frontmostApplication())
@@ -48,8 +64,6 @@ function M.start()
         end
     end
 
-    -- Keep the bindings disabled outside Chrome so Cmd+Option+Up/Down remain
-    -- available to macOS and other apps.
     local watcher = hs.application.watcher.new(function(_, eventType)
         if eventType == hs.application.watcher.activated
             or eventType == hs.application.watcher.deactivated then
@@ -59,7 +73,6 @@ function M.start()
     watcher:start()
     updateHotkeys()
 
-    -- Retain these objects for the lifetime of the Hammerspoon config.
     M.hotkeys = hotkeys
     M.watcher = watcher
 end

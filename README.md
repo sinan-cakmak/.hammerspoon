@@ -29,8 +29,12 @@ tweak, and extend.
   calibration hotkey for measuring the coordinates.
 - **Search selected text**: send the active word or phrase to Google in the
   default browser without replacing the clipboard.
-- **Chrome vertical-tab navigation**: move to the previous or next tab with
-  `Cmd+Option+Up/Down` while Chrome is active.
+- **Open active directories in VS Code** from Finder or Warp without typing into
+  a terminal pane that may already be running a process.
+- **Spotify Desktop mode**: replace native fullscreen with a same-size,
+  centered Spotify window on a dedicated, reusable Desktop.
+- **Chrome vertical-tab extension**: move through vertical tabs with
+  `Cmd+Option+Up/Down`, adding `Shift` to select every traversed tab.
 - **Recenter** a window without changing its size.
 - **Coupled window edges**: resize or move a window and every adjacent window
   touching one of its edges resizes too. Changes propagate through shared
@@ -142,7 +146,10 @@ Releasing without moving past the deadzone does nothing.
 | `Ctrl+Option+Cmd + G` | Google the actively selected word or phrase |
 | `Ctrl+Shift+Alt + C` | Calibration: show the `rx`/`ry` under the cursor      |
 | `Ctrl+Shift+Alt + D` | Dump quick-throw diagnostics to the log               |
-| `Cmd+Option + ↑ / ↓` | Previous / next Chrome tab (Chrome only)               |
+| `Ctrl+Option+Cmd + V` | Open Finder's or Warp's active directory in VS Code |
+| `Fn+F` / `Ctrl+Cmd+F` | Toggle Spotify's centered, non-fullscreen Desktop (Spotify only) |
+| `Cmd+Option + ↑ / ↓` | Previous / next Chrome tab                             |
+| `Cmd+Option+Shift + ↑ / ↓` | Travel while selecting Chrome tabs (extension required) |
 
 > **Keyboard layout note:** the move/resize bindings use the `ı` (dotless i)
 > key from the Turkish layout alongside `j/k/l`. On other layouts the `ı`
@@ -161,6 +168,10 @@ Releasing without moving past the deadzone does nothing.
 │   ├── util.lua          # Shared helpers (color, logger)
 │   └── coupling.lua      # Suppression flag so placement operations don't
 │                         #   resize neighbours via coupled edges
+├── helpers/
+│   └── move_window_to_space.m # macOS 26 verified window-to-Space helper source
+├── bin/
+│   └── move-window-to-space   # Compiled local helper used by Spotify mode
 └── modules/
     ├── window_move.lua   # Held-arrow move / resize engine + magnetic snapping
     ├── window_snap.lua   # Halves, maximize, corner/third cycling, recenter, revert
@@ -169,9 +180,15 @@ Releasing without moving past the deadzone does nothing.
     ├── window_tile_resize.lua # Coupled movement/resizing of adjacent windows
     ├── click_points.lua  # Fn+F1 / Fn+F2 click fixed screen spots
     ├── search_selection.lua # Google selected text in the default browser
-    ├── chrome_tabs.lua      # Chrome-only previous/next tab navigation
+    ├── finder_vscode.lua # Open Finder/Warp's current directory in VS Code
+    ├── spotify_space.lua # Center Spotify on a dedicated reusable Desktop
+    ├── chrome_tabs.lua      # Bridge for Chrome traversal/selection shortcuts
     └── app_control.lua   # Unminimize, app utilities
 ```
+
+The optional `chrome-tab-shortcuts/` unpacked Chrome extension provides
+Chrome-only tab traversal and multi-selection shortcuts; see its own README for
+installation instructions.
 
 Each module returns a table with a `start()` function; `init.lua` requires and
 starts them, isolating failures so one broken module won't take down the rest.
