@@ -29,6 +29,8 @@ tweak, and extend.
   calibration hotkey for measuring the coordinates.
 - **Search selected text**: send the active word or phrase to Google in the
   default browser without replacing the clipboard.
+- **Chrome vertical-tab navigation**: move to the previous or next tab with
+  `Cmd+Option+Up/Down` while Chrome is active.
 - **Recenter** a window without changing its size.
 - **Coupled window edges**: resize or move a window and every adjacent window
   touching one of its edges resizes too. Changes propagate through shared
@@ -140,6 +142,7 @@ Releasing without moving past the deadzone does nothing.
 | `Ctrl+Option+Cmd + G` | Google the actively selected word or phrase |
 | `Ctrl+Shift+Alt + C` | Calibration: show the `rx`/`ry` under the cursor      |
 | `Ctrl+Shift+Alt + D` | Dump quick-throw diagnostics to the log               |
+| `Cmd+Option + ↑ / ↓` | Previous / next Chrome tab (Chrome only)               |
 
 > **Keyboard layout note:** the move/resize bindings use the `ı` (dotless i)
 > key from the Turkish layout alongside `j/k/l`. On other layouts the `ı`
@@ -166,6 +169,7 @@ Releasing without moving past the deadzone does nothing.
     ├── window_tile_resize.lua # Coupled movement/resizing of adjacent windows
     ├── click_points.lua  # Fn+F1 / Fn+F2 click fixed screen spots
     ├── search_selection.lua # Google selected text in the default browser
+    ├── chrome_tabs.lua      # Chrome-only previous/next tab navigation
     └── app_control.lua   # Unminimize, app utilities
 ```
 

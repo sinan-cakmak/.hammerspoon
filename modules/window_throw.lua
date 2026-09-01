@@ -10,6 +10,10 @@ local log = util.logger("throw")
 
 local M = {}
 
+-- Replaced by start() once its private gesture state has been created. Keeping
+-- this callable lets other Cmd+Option features safely cancel an armed throw.
+function M.cancel() end
+
 function M.start()
     local profiles = cfg.throw.profiles or {}
     local deadzone = cfg.throw.deadzone
@@ -112,11 +116,11 @@ function M.start()
         return nil
     end
 
-    local function endThrow()
+    local function endThrow(shouldCommit)
         if not active then return end
         active = false
         if timer then timer:stop(); timer = nil end
-        if dir and window then
+        if shouldCommit ~= false and dir and window then
             coupling.suspend(window:id())  -- don't drag neighbours on a throw
             local ok, err = pcall(function()
                 window:setFrame(zones[dir], animation)  -- short, fast glide
@@ -130,6 +134,12 @@ function M.start()
         dot:hide()
         preview:hide()
         origin, window, dir = nil, nil, nil
+    end
+
+    M.cancel = function()
+        if not active then return end
+        log("throw cancelled by another Cmd+Option shortcut")
+        endThrow(false)
     end
 
     local function tick()

@@ -14,8 +14,10 @@ return {
         shrinkDir = {"ctrl", "shift", "alt"},   -- directional shrink
         snap      = {"ctrl", "alt"},            -- half-screen snapping + center
         throw     = {"cmd", "alt"},             -- quick throw (held)
+        chromeTabs = {"cmd", "alt"},            -- Chrome vertical-tab navigation
         display   = {"ctrl", "alt", "cmd"},     -- send window to another display
         search    = {"ctrl", "alt", "cmd"},     -- search selected text
+        finder    = {"ctrl", "alt", "cmd"},     -- Finder-only utilities
         debugKey  = {"ctrl", "shift", "alt"},   -- diagnostics
     },
 
