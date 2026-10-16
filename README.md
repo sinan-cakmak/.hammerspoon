@@ -31,6 +31,8 @@ tweak, and extend.
   default browser without replacing the clipboard.
 - **Open active directories in VS Code** from Finder or Warp without typing into
   a terminal pane that may already be running a process.
+- **Open Codex projects in VS Code** with `Cmd+Option+O`, using the selected
+  local project's main source folder.
 - **Spotify Desktop mode**: replace native fullscreen with a same-size,
   centered Spotify window on a dedicated, reusable Desktop.
 - **Chrome vertical-tab extension**: move through vertical tabs with
@@ -147,6 +149,7 @@ Releasing without moving past the deadzone does nothing.
 | `Ctrl+Shift+Alt + C` | Calibration: show the `rx`/`ry` under the cursor      |
 | `Ctrl+Shift+Alt + D` | Dump quick-throw diagnostics to the log               |
 | `Ctrl+Option+Cmd + V` | Open Finder's or Warp's active directory in VS Code |
+| `Cmd+Option + O` | Open the selected Codex project's main folder in VS Code (Codex only) |
 | `Fn+F` / `Ctrl+Cmd+F` | Toggle Spotify's centered, non-fullscreen Desktop (Spotify only) |
 | `Cmd+Option + ↑ / ↓` | Previous / next Chrome tab                             |
 | `Cmd+Option+Shift + ↑ / ↓` | Travel while selecting Chrome tabs (extension required) |
@@ -181,6 +184,7 @@ Releasing without moving past the deadzone does nothing.
     ├── click_points.lua  # Fn+F1 / Fn+F2 click fixed screen spots
     ├── search_selection.lua # Google selected text in the default browser
     ├── finder_vscode.lua # Open Finder/Warp's current directory in VS Code
+    ├── codex_vscode.lua  # Open the selected Codex project's main folder in VS Code
     ├── spotify_space.lua # Center Spotify on a dedicated reusable Desktop
     ├── chrome_tabs.lua      # Bridge for Chrome traversal/selection shortcuts
     └── app_control.lua   # Unminimize, app utilities
@@ -200,6 +204,8 @@ starts them, isolating failures so one broken module won't take down the rest.
 All tunables live in [`config.lua`](config.lua):
 
 - **`mods`** — the modifier combos for each feature group.
+- **`mods.codexOpenCode`** — modifiers for the Codex-to-VS-Code shortcut
+  (`{"cmd", "alt"}` by default, with the `O` key).
 - **`accent`** — the overlay color (azure by default).
 - **`move`** — step sizes, acceleration, timer interval, minimum window size, and
   `snapDistance` (magnetic snap radius in px; `0` disables magnetism).
@@ -207,6 +213,17 @@ All tunables live in [`config.lua`](config.lua):
 - **`tile`** — coupled move/resizing: toggle, edge tolerance, neighbour min size.
 - **`clicks`** — the `Fn+F1`/`Fn+F2` click targets and cursor-restore toggle.
 - **`debug`** — set `true` to write logs to `/tmp/hs.log`.
+
+### Codex projects in VS Code
+
+With the Codex desktop app focused, press `Cmd+Option+O` to open the selected
+local project's first source folder in Visual Studio Code. Hammerspoon reads
+`$CODEX_HOME/.codex-global-state.json` (or `~/.codex/.codex-global-state.json`)
+once per keypress and resolves `selected-project.projectId` through
+`local-projects` to `rootPaths[1]`. It shows a message for a missing or remote
+selection, or an unavailable folder. VS Code must be installed and Hammerspoon
+must remain running. This uses Codex's internal saved-state format, which can
+change with app updates or lag behind the visible selection.
 
 ### Click points
 
