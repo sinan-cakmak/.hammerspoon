@@ -31,7 +31,7 @@ tweak, and extend.
   default browser without replacing the clipboard.
 - **Open active directories in VS Code** from Finder or Warp without typing into
   a terminal pane that may already be running a process.
-- **Open Codex projects in VS Code** with `Cmd+Option+O`, using the selected
+- **Open Codex projects in VS Code** with `Ctrl+Option+Cmd+V`, using the selected
   local project's main source folder.
 - **Spotify Desktop mode**: replace native fullscreen with a same-size,
   centered Spotify window on a dedicated, reusable Desktop.
@@ -149,7 +149,7 @@ Releasing without moving past the deadzone does nothing.
 | `Ctrl+Shift+Alt + C` | Calibration: show the `rx`/`ry` under the cursor      |
 | `Ctrl+Shift+Alt + D` | Dump quick-throw diagnostics to the log               |
 | `Ctrl+Option+Cmd + V` | Open Finder's or Warp's active directory in VS Code |
-| `Cmd+Option + O` | Open the selected Codex project's main folder in VS Code (Codex only) |
+| `Ctrl+Option+Cmd + V` | Open the selected Codex project's main folder in VS Code (Codex only) |
 | `Fn+F` / `Ctrl+Cmd+F` | Toggle Spotify's centered, non-fullscreen Desktop (Spotify only) |
 | `Cmd+Option + ↑ / ↓` | Previous / next Chrome tab                             |
 | `Cmd+Option+Shift + ↑ / ↓` | Travel while selecting Chrome tabs (extension required) |
@@ -205,7 +205,7 @@ All tunables live in [`config.lua`](config.lua):
 
 - **`mods`** — the modifier combos for each feature group.
 - **`mods.codexOpenCode`** — modifiers for the Codex-to-VS-Code shortcut
-  (`{"cmd", "alt"}` by default, with the `O` key).
+  (`{"ctrl", "alt", "cmd"}` by default, with the `V` key).
 - **`accent`** — the overlay color (azure by default).
 - **`move`** — step sizes, acceleration, timer interval, minimum window size, and
   `snapDistance` (magnetic snap radius in px; `0` disables magnetism).
@@ -216,7 +216,7 @@ All tunables live in [`config.lua`](config.lua):
 
 ### Codex projects in VS Code
 
-With the Codex desktop app focused, press `Cmd+Option+O` to open the selected
+With the Codex desktop app focused, press `Ctrl+Option+Cmd+V` to open the selected
 local project's first source folder in Visual Studio Code. Hammerspoon reads
 `$CODEX_HOME/.codex-global-state.json` (or `~/.codex/.codex-global-state.json`)
 once per keypress and resolves `selected-project.projectId` through

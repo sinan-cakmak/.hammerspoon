@@ -1,4 +1,4 @@
--- Cmd+Option+O opens the selected Codex project's primary source in VS Code.
+-- Ctrl+Option+Cmd+V opens the selected Codex project's primary source in VS Code.
 -- The shortcut is enabled only while the Codex/ChatGPT desktop app is focused.
 local cfg = require("config")
 local M = {}
@@ -64,7 +64,7 @@ end
 
 function M.start()
     if M.hotkey then return end
-    M.hotkey = hs.hotkey.new(cfg.mods.codexOpenCode or {"cmd", "alt"}, "o", M.openProject)
+    M.hotkey = hs.hotkey.new(cfg.mods.codexOpenCode or {"ctrl", "alt", "cmd"}, "v", M.openProject)
     local function updateHotkey()
         if isCodex(hs.application.frontmostApplication()) then
             M.hotkey:enable()

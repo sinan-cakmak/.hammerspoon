@@ -18,7 +18,7 @@ return {
         display   = {"ctrl", "alt", "cmd"},     -- send window to another display
         search    = {"ctrl", "alt", "cmd"},     -- search selected text
         openCode  = {"ctrl", "alt", "cmd"},     -- open active directory in VS Code
-        codexOpenCode = {"cmd", "alt"},          -- open Codex project in VS Code
+        codexOpenCode = {"ctrl", "alt", "cmd"},          -- open Codex project in VS Code
         debugKey  = {"ctrl", "shift", "alt"},   -- diagnostics
     },
 
