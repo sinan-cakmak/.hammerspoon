@@ -139,6 +139,10 @@ when only one display is connected.
 
 Releasing without moving past the deadzone does nothing.
 
+On the 5120×1440 display, full-height throws use four columns in thin → thick →
+thick → thin order. Diagonal throws align with the outer columns and use 55% of
+their height, anchored at the top or bottom edge.
+
 ### Other
 
 | Keys                 | Action                                                |

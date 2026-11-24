@@ -1,6 +1,26 @@
 -- Shared configuration for all modules.
 -- Tweak values here; modules read from this table so behaviour stays in one place.
 
+-- Thin, thick, thick, thin columns for quick throw on the 5120x1440 display.
+local fourUp = {
+    left  = {x = 0,    y = 30, w = 1096, h = 1410},
+    up    = {x = 1096, y = 30, w = 1464, h = 1410},
+    down  = {x = 2560, y = 30, w = 1660, h = 1410},
+    right = {x = 4221, y = 30, w = 899,  h = 1410},
+}
+
+-- Corners follow the outer columns. The top and bottom targets overlap so
+-- both can use 55% of the column height while staying flush with opposite edges.
+local function cornerFrame(column, bottom)
+    local height = math.floor(column.h * 0.55 + 0.5)
+    return {
+        x = column.x,
+        y = bottom and (column.y + column.h - height) or column.y,
+        w = column.w,
+        h = height,
+    }
+end
+
 return {
     -- Set true to enable file logging (see lib/util.lua -> /tmp/hs.log)
     debug = true,
@@ -78,15 +98,15 @@ return {
                 screen = {w = 5120, h = 1440},  -- full display resolution to match
                 zones = {
                     -- Cardinal directions
-                    left  = {x = 0,    y = 30, w = 1069, h = 1410}, -- Arc (full height)
-                    right = {x = 4102, y = 30, w = 1018, h = 1410}, -- Warp
-                    up    = {x = 1070, y = 30, w = 1509, h = 1410}, -- Cursor
-                    down  = {x = 2580, y = 30, w = 1521, h = 1410}, -- Conductor
+                    left  = fourUp.left,
+                    right = fourUp.right,
+                    up    = fourUp.up,
+                    down  = fourUp.down,
                     -- Diagonal directions (corners)
-                    topleft     = {x = 0,    y = 30,  w = 1069, h = 710}, -- Arc
-                    bottomleft  = {x = 0,    y = 740, w = 1069, h = 700}, -- Slack
-                    topright    = {x = 4102, y = 30,  w = 1018, h = 701}, -- WhatsApp
-                    bottomright = {x = 4102, y = 731, w = 1018, h = 709}, -- Ghostty
+                    topleft     = cornerFrame(fourUp.left, false),
+                    bottomleft  = cornerFrame(fourUp.left, true),
+                    topright    = cornerFrame(fourUp.right, false),
+                    bottomright = cornerFrame(fourUp.right, true),
                 },
             },
         },
